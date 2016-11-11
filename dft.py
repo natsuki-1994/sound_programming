@@ -1,3 +1,4 @@
+# 不完全なコード
 # coding:utf-8
 
 import wave
