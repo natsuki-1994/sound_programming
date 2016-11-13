@@ -41,17 +41,16 @@ if __name__ == "__main__":
         xs_win = xs_cut * window
         Xs = scipy.fftpack.fft(xs_win, n_fft)
 
-        # 周波数振幅のみ考慮 / 周波数位相は無視する
+        # 周波数振幅と周波数位相
         Xs_amplitude_spectrum = numpy.array([numpy.sqrt(c.real ** 2 + c.imag ** 2) for c in Xs])
-        freq_list = scipy.fftpack.fftfreq(n_fft, d=1.0/fs)
-        print Xs_amplitude_spectrum
+        Xs_phase_spectrum = numpy.array([numpy.arctan2(c.imag, c.real) for c in Xs])
+        freq_list = scipy.fftpack.fftfreq(n_fft, d=1.0 / fs)
 
         # 信号処理
-        Xs_amplitude_spectrum -= threshold
-        print Xs_amplitude_spectrum
-        Xs_amplitude_spectrum[Xs_amplitude_spectrum < 0.0] = 0.0
-        print Xs_amplitude_spectrum
-        exit(-1)
+        Xs_amplitude_spectrum -= threshold  # 周波数振幅からしきい値を減算
+        Xs_amplitude_spectrum[Xs_amplitude_spectrum < 0.0] = 0.0  # 周波数振幅が負の値を0に修正
+
+        Zs = Xs_amplitude_spectrum * numpy.cos(Xs_phase_spectrum) + Xs_amplitude_spectrum * numpy.sin(Xs_phase_spectrum) * 1j
         zs = scipy.fftpack.ifft(Zs, n_fft)
 
         ys[start: start + n_fft] += numpy.real(zs)
