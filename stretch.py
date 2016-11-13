@@ -102,7 +102,7 @@ if __name__ == "__main__":
     wf = wave.open("sample10.wav", "r")
 
     # 入出力ファイル長
-    fs = wf.getframerate()
+    fs = wf.getframerate()  # ファイルのサンプリング周波数
     n_len = wf.getnframes()  # 入力ファイル長
     n_len_stretch = int(n_len * 1.5) + 1  # 出力ファイルは入力ファイルの1.5倍
 
