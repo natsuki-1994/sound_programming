@@ -9,7 +9,7 @@ from pylab import *
 
 if __name__ == "__main__":
 
-    wf = wave.open("sin.wav", "r")
+    wf = wave.open("sample10.wav", "r")
 
     n_len = wf.getnframes()
     n_fft = 128
@@ -60,13 +60,13 @@ if __name__ == "__main__":
     # 3秒分プロット
     fig = matplotlib.pyplot.figure(1, figsize=(8, 10))
     ax = fig.add_subplot(211)
-    ax.plot(xs[: fs / 10])
+    ax.plot(xs[: fs * 5])
     ax.set_title("input signal")
     ax.set_xlabel("time [pt]")
     ax.set_ylabel("amplitude")
 
     ax = fig.add_subplot(212)
-    ax.plot(ys[: fs / 10])
+    ax.plot(ys[: fs * 5])
     ax.set_title("output signal")
     ax.set_xlabel("time [pt]")
     ax.set_ylabel("amplitude")
