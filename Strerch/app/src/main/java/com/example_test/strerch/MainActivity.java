@@ -32,14 +32,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     int SAMPLING_RATE = 44100;
     int INDENT = 500;
-    int currentRingBufferSize = 0;
-
-    /**
-     * AudioTrack用 リングバッファがOverFlow しないためのFIFO
-     * 読み込んで2回に一回 リングバッファに書き出す
-     */
-    LinkedList<Short> fifo = new LinkedList<>();
-    int count = 0;
 
 //    int PMAX = 882;
 
@@ -83,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                      * bufOut      ... 書き込み用バッファ (stereo・bufIn の 2倍)
                      * bufOutFifo  ... 書き込み待ち用FIFO
                      * bufTemp     ... 前回読み取った中で書き込み待ち用バッファに書き込んでいないものと今回読み取ったもの
-                     * bufTempTemp ...
+                     * bufTempTemp
                      */
                     short bufIn[] = new short[bufInSizeShort];
                     short bufOut[] = new short[bufInSizeShort * 2];
