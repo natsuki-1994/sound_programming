@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //    }
 
     private void requestRecordAudioPermission(){
-        // TODO: check API version, do not do this if API version < 23!
+        /** API のバージョンをチェック, API version < 23 なら何もしない */
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 1);
         }
