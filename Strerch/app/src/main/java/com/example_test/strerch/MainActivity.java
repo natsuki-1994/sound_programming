@@ -92,29 +92,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         audioRec.read(bufIn, 0, bufInSizeShort);
                         System.arraycopy(bufIn, 0, bufTemp, INDENT, bufInSizeShort);
 
-//                        for (int i = 0; i < size; i++) {
-//                            bufTemp[i + indent] = bufIn[i];
-//                        }
-//                        for (int i = 0; i < size; i++) {
-//                            bufTemp[i + 2000] = bufIn[i];
-//                        }
-
-//                        int i = 0;
-//                        int k = 0;
-//                        while (i <= 8000) {
-//                            for (int j = 0; j < 2000; j++) {
-//                                bufOutTemp[k + j] = bufTemp[i + j];
-//                                bufOutTemp[k + 2000 + j] = bufTemp[i + j];
-//                            }
-//
-//                            i += 2000;
-//                            k += 4000;
-//                        }
-
-
-//                        Log.v("AudioRecord", "i " + i);
-//                        Log.v("AudioRecord", "k " + k);
-
 //                        // FFTインスタンス生成
 //                        DoubleFFT_1D fft = new DoubleFFT_1D(size);
 //
@@ -146,7 +123,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //                        // IFFT実行
 //                        fft.realInverse(ifftData, true);
 
-                        // data stretch
+                        /**
+                         * 音声の伸張
+                         */
 //                        int offset0 = 0;
 //                        int offset1 = 0;
 //                        int templateSize = 441;  // SAMPLINGRATE * 0.01
