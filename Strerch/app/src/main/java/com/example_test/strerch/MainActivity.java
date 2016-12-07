@@ -17,6 +17,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import org.jtransforms.fft.DoubleFFT_1D;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -92,129 +94,37 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         audioRec.read(bufIn, 0, bufInSizeShort);
                         System.arraycopy(bufIn, 0, bufTemp, INDENT, bufInSizeShort);
 
-//                        // FFTインスタンス生成
-//                        DoubleFFT_1D fft = new DoubleFFT_1D(size);
-//
-//                        // fftData ifftData
-//                        double fftData[] = new double[size];
-//                        double fftDataAmp[] = new double[size / 2];
-//                        double fftDataPhase[] = new double[size / 2];
-//                        double ifftData[] = new double[size];
-//                        for (int i = 0; i < size; i++) {
-//                            // データ型を変換し -1 - +1 に正規化
-//                            fftData[i] = (bufIn[i] * 1.0) / Short.MAX_VALUE;
-//                        }
-//
-//                        // FFT実行
-//                        fft.realForward(fftData);
-//                        // noise canceling
-//                        for (int i = 0; i < size; i += 2) {
-//                            // 振幅成分と位相成分
-//                            fftDataAmp[i / 2] = Math.sqrt(Math.pow(fftData[i], 2) + Math.pow(fftData[i + 1], 2));
-//                            fftDataPhase[i / 2] = Math.atan2(fftData[i + 1], fftData[i]);
-//                            // 振幅成分から閾値一律マイナス
-//                            fftDataAmp[i / 2] -= 1.0;
-//                            if (fftDataAmp[i / 2] < 0) fftDataAmp[i / 2] = 0;
-//
-//                            ifftData[i] = fftDataAmp[i / 2] * Math.cos(fftDataPhase[i / 2]);
-//                            ifftData[i + 1] = fftDataAmp[i / 2] * Math.sin(fftDataPhase[i / 2]);
-//                        }
-//                        System.arraycopy(fftData, 0, ifftData, 0, size);
-//                        // IFFT実行
-//                        fft.realInverse(ifftData, true);
+                        // FFTインスタンス生成
+                        DoubleFFT_1D fft = new DoubleFFT_1D(size);
 
-                        /**
-                         * 音声の伸張
-                         */
-//                        int offset0 = 0;
-//                        int offset1 = 0;
-//                        int templateSize = 441;  // SAMPLINGRATE * 0.01
-//                        int pMin = 220;  // SAMPLINGRATE * 0.05
-//                        int pMax = 882;  // SAMPLINGRATE * 0.02
-//                        int p;  // 検出した周波数
-//
-//                        double al[] = new double[templateSize];
-//                        double bl[] = new double[templateSize];
-//                        double cl[] = new double[(int) ((bufSize / 2 + PMAX * 2) * 1.5)];  // bufOutと同じデータになる(フレーム数1/2) (出力直前にstereoに直してbufOutに格納)
-//                        double temp;  // 足し合わせて相関係数を求める際に用いる一時変数
-//                        double r;  //  足しあわされた相関係数
-//
-//                        while (offset0 + pMax * 2 < bufTempSize) {
-//                            for (int i = 0; i < templateSize; i++) {
-//                                al[i] = bufTemp[offset0 + i];
-//                            }
-//                            double rMax = 0.0;  // 相関係数のMax値
-//                            p = pMin;
-//                            for (int tau = pMin; tau < pMax; tau++) {  // pMinからpMaxまでtauずらしながら相関係数を計算
-//                                r = 0;
-//                                for (int i = 0; i < templateSize; i++) {
-//                                    bl[i] = bufTemp[offset0 + tau + i];
-//                                }
-//                                for (int i = 0; i < templateSize; i++) {
-//                                    temp = al[i] * bl[i];
-//                                    r += temp;
-//                                }
-//                                if (r > rMax) {
-//                                    rMax = r;  // 自己相関関数のピーク値
-//                                    p = tau;  // 音データの基本周期
-//                                }
-//                            }
-//                            /**
-//                             * bufTempの2周期をclに3周期分copy
-//                             */
-//                            for (int i = 0; i < p; i++) {
-//                                cl[offset1 + i] = bufTemp[offset0 + i];
-//                            }
-//                            for (int i = 0; i < p; i++) {
-//                                cl[offset1 + p + i] = bufTemp[offset0 + i] * (i / p);
-//                                cl[offset1 + p + i] += bufTemp[offset0 + p + i] * (1 - (i / p));
-//                            }
-//                            for (int i = 0; i < p; i++) {
-//                                cl[offset1 + 2 * p + i] = bufTemp[offset0 + p + i];
-//                            }
-//                            Log.v("AudioRecord", "offset0 " + offset0);
-//                            offset0 = offset0 + 2 * p;
-//                            offset1 = offset1 + 3 * p;
-//                        }
-//                        /**
-//                         * offset0 番目までしかbufTempを処理していない
-//                         * 残りフレーム(bufTempSize - offset0 フレーム)をbufTempの先頭にコピー
-//                         * indentの値を更新
-//                         * clで音データで埋まっているのはoffset1 番目まで
-//                         */
-//                        for (int i = 0; i < bufTempSize - offset0; i++) {
-//                            bufTempTemp[i] = bufTemp[offset0 + i];
-//                        }
-//                        for (int i = 0; i < bufTempSize; i++) {
-//                            if (i < bufTempSize - offset0) {
-//                                bufTemp[i] = bufTempTemp[i];
-//                            } else {
-//                                bufTemp[i] = 0;
-//                            }
-//                        }
-//
-//                        indent = bufTempSize - offset0;
-//                        Log.v("AudioRecord", "offset0 " + offset0);
-//                        Log.v("AudioRecord", "indent " + indent);
-//                        bufTempSize = size + indent;
-//
-//                        for (int i = 0; i < offset1; i++) {
-//                            // データ型を変換
-//                            bufOut[2 * i] = (short) (cl[i] * Short.MAX_VALUE);
-//                            bufOut[2 * i + 1] = (short) (cl[i] * Short.MAX_VALUE);
-//                        }
-//
-//                        // bufOutをoffset1 * 2 フレーム出力
-//                        audioTrack.write(bufOut, 0, offset1 * 2);
+                        // fftData ifftData
+                        double fftData[] = new double[size];
+                        double fftDataAmp[] = new double[size / 2];
+                        double fftDataPhase[] = new double[size / 2];
+                        double ifftData[] = new double[size];
+                        for (int i = 0; i < size; i++) {
+                            // データ型を変換し -1 - +1 に正規化
+                            fftData[i] = (bufIn[i] * 1.0) / Short.MAX_VALUE;
+                        }
 
-//                          for (int j = 0; j < 2000; j++) {
-//                              bufTempTemp[j] = bufTemp[8000 + j];
-//                          }
+                        // FFT実行
+                        fft.realForward(fftData);
+                        // noise canceling
+                        for (int i = 0; i < size; i += 2) {
+                            // 振幅成分と位相成分
+                            fftDataAmp[i / 2] = Math.sqrt(Math.pow(fftData[i], 2) + Math.pow(fftData[i + 1], 2));
+                            fftDataPhase[i / 2] = Math.atan2(fftData[i + 1], fftData[i]);
+                            // 振幅成分から閾値一律マイナス
+                            fftDataAmp[i / 2] -= 1.0;
+                            if (fftDataAmp[i / 2] < 0) fftDataAmp[i / 2] = 0;
 
-//                        for (int j = 0; j < INDENT; j++) {
-//                            bufTempTemp[j] = bufTemp[ReadShortSize + j];
-//                        }
-
+                            ifftData[i] = fftDataAmp[i / 2] * Math.cos(fftDataPhase[i / 2]);
+                            ifftData[i + 1] = fftDataAmp[i / 2] * Math.sin(fftDataPhase[i / 2]);
+                        }
+                        System.arraycopy(fftData, 0, ifftData, 0, size);
+                        // IFFT実行
+                        fft.realInverse(ifftData, true);
+                        
                         /**
                          * stereo に変更かつ 1/2 倍速 にする
                          * bufTemp のうち bufOutFifo に含めるのは先頭 bufInSizeShort 分
