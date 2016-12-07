@@ -106,8 +106,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                          * ifftData     ... IFFT かけるデータで周波数成分で補完して時間軸で伸ばしたデータ
                          */
                         double fftData[] = new double[bufInSizeShort];
-                        double fftDataAmp[] = new double[bufInSizeShort / 2];
-                        double fftDataPhase[] = new double[bufInSizeShort / 2];
+//                        double fftDataAmp[] = new double[bufInSizeShort / 2];
+//                        double fftDataPhase[] = new double[bufInSizeShort / 2];
                         double ifftData[] = new double[bufInSizeShort * 2];
 
                         /**
