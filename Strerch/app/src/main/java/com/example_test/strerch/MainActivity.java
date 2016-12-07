@@ -143,10 +143,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                          * fftData を補完して時間軸方向に伸ばす処理を行う
                          */
                         for (int i = 0; i < bufInSizeShort; i += 2) {
-                            ifftData[2 * i] = fftData[i];
-                            ifftData[2 * i + 1] = fftData[i + 1];
-                            ifftData[2 * i + 2] = fftData[i];
-                            ifftData[2 * i + 3] = fftData[i + 1];
+                            if (i == 0) {
+                                ifftData[2 * i] = fftData[i];
+                                ifftData[2 * i + 1] = fftData[i + 1];
+                                ifftData[2 * i + 2] = (fftData[i] + fftData[i + 2]) / 2;
+                                ifftData[2 * i + 3] = (fftData[i + 1] + fftData[i + 3]) / 2;
+                            } else if (i == bufInSizeShort - 2) {
+                                ifftData[2 * i] = fftData[i];
+                                ifftData[2 * i + 1] = fftData[i + 1];
+                                ifftData[2 * i + 2] = (fftData[i] + fftData[i - 2]) / 2;
+                                ifftData[2 * i + 3] = (fftData[i + 1] + fftData[i - 3]) / 2;
+                            } else {
+                                ifftData[2 * i] = fftData[i];
+                                ifftData[2 * i + 1] = fftData[i + 1];
+                                ifftData[2 * i + 2] = (fftData[i] + fftData[i + 2] + fftData[i - 2]) / 3;
+                                ifftData[2 * i + 3] = (fftData[i + 1] + fftData[i + 3] + fftData[i - 1]) / 3;
+                            }
                         }
 
                         /**
@@ -161,6 +173,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             bufOutFifo.offer((short) (ifftData[i] * Short.MAX_VALUE));
                             bufOutFifo.offer((short) (ifftData[i] * Short.MAX_VALUE));
                         }
+//                        Log.v("AudioRecord: ", "ifftDataLength " + ifftData.length);
+//                        Log.v("AudioRecord: ", "bufOutFifoLength " + bufOutFifo.size());
 
                         /**
                          * bufOutFifo から bufOut.length 分だけ audioTrack のリングバッファに入力
@@ -168,6 +182,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         for (int j = 0; j < bufOut.length; j++) {
                             bufOut[j] = bufOutFifo.poll();
                         }
+//                        Log.v("AudioRecord: ", "bufInLength " + bufIn.length);
+//                        Log.v("AudioRecord: ", "bufOutLength " + bufOut.length);
                         audioTrack.write(bufOut, 0, bufOut.length);
 
                     }
@@ -279,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 SAMPLING_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        bufInSizeByte = 4096 * 2 * 2;  /** Short に換算したサイズが FFT (2 ** n) に適したサイズとなる */
+        bufInSizeByte = 4096;  /** Short に換算したサイズが FFT (2 ** n) に適したサイズとなる */
         bufInSizeShort = bufInSizeByte / 2;
 
         /**
