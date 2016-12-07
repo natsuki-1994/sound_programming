@@ -86,13 +86,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                      * bufOutFifo  ... 書き込み待ち用FIFO
                      * bufTemp     ... 前回読み取った中で書き込み待ち用バッファに書き込んでいないものと今回読み取ったもの
                      * bufTempTemp
+                     * pSize       ... 音の基本周期を 200 フレームに固定しちゃう
                      */
                     short bufIn[] = new short[bufInSizeShort];
                     short bufOut[] = new short[bufInSizeShort * 2];
                     LinkedList<Short> bufOutFifo = new LinkedList<>();
-//                    short bufTemp[] = new short[bufInSizeShort + P_MAX * 2];
-                    short bufTemp[] = new short[bufInSizeShort];
-//                    short bufTempTemp[] = new short[P_MAX * 2];
+                    int pSize = 200;
 
                     while (bIsRecording) {
                         /**
@@ -102,168 +101,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                          * これ以降 bufTemp で埋まっているフレームは (indent + bufInSizeShort) フレームまで
                          */
                         audioRec.read(bufIn, 0, bufInSizeShort);
-//                        System.arraycopy(bufIn, 0, bufTemp, indent, bufInSizeShort);
-                        System.arraycopy(bufIn, 0, bufTemp, 0, bufInSizeShort);
-
-//                        // FFTインスタンス生成
-//                        DoubleFFT_1D fft = new DoubleFFT_1D(size);
-//
-//                        // fftData ifftData
-//                        double fftData[] = new double[size];
-//                        double fftDataAmp[] = new double[size / 2];
-//                        double fftDataPhase[] = new double[size / 2];
-//                        double ifftData[] = new double[size];
-//                        for (int i = 0; i < size; i++) {
-//                            // データ型を変換し -1 - +1 に正規化
-//                            fftData[i] = (bufIn[i] * 1.0) / Short.MAX_VALUE;
-//                        }
-//
-//                        // FFT実行
-//                        fft.realForward(fftData);
-//                        // noise canceling
-//                        for (int i = 0; i < size; i += 2) {
-//                            // 振幅成分と位相成分
-//                            fftDataAmp[i / 2] = Math.sqrt(Math.pow(fftData[i], 2) + Math.pow(fftData[i + 1], 2));
-//                            fftDataPhase[i / 2] = Math.atan2(fftData[i + 1], fftData[i]);
-//                            // 振幅成分から閾値一律マイナス
-//                            fftDataAmp[i / 2] -= 1.0;
-//                            if (fftDataAmp[i / 2] < 0) fftDataAmp[i / 2] = 0;
-//
-//                            ifftData[i] = fftDataAmp[i / 2] * Math.cos(fftDataPhase[i / 2]);
-//                            ifftData[i + 1] = fftDataAmp[i / 2] * Math.sin(fftDataPhase[i / 2]);
-//                        }
-//                        System.arraycopy(fftData, 0, ifftData, 0, size);
-//                        // IFFT実行
-//                        fft.realInverse(ifftData, true);
 
                         /**
                          * 音声の伸長スタート
                          */
-
-                        /**
-                         * offset0 ... 伸長する前のデータで処理済のフレーム数
-                         * offset1 ... 伸長した後のデータのフレーム数
-                         * pFound  ... 検出された音の周期
-                         */
-                        int offset0 = 0;
-                        int offset1 = 0;
-                        int pFound;  /** 検出した周波数 */
-
-                        /**
-                         * al   ... 相関係数を計算するための配列
-                         * bl   ... 相関係数を計算するための配列 (al とは tau ずらしている)
-                         * cl   ... 2/3 倍速に直したデータを格納する配列
-                         * temp ... 足し合わせて相関係数を求める際に用いる一時変数
-                         * r    ... 足しあわされた相関係数
-                         */
-                        short al[] = new short[TEMPLATE_SIZE];
-                        short bl[] = new short[TEMPLATE_SIZE];
-                        short cl[] = new short[(int) (bufTemp.length * 1.5)];
-                        double temp;
-                        double r;
-
-//                        while ((offset0 + P_MAX * 2) < (indent + bufInSizeShort)) {
-//                            for (int i = 0; i < TEMPLATE_SIZE; i++) {
-//                                al[i] = bufTemp[offset0 + i];
-//                            }
-//                            double rMax = 0.0;  /** 相関係数の Max 値 */
-//                            pFound = P_MIN;  /** pFound の初期値は P_MIN */
-//
-//                            /**
-//                             * P_MIN から P_MAX まで tau ずらしながら相関係数を計算
-//                             */
-//                            for (int tau = P_MIN; tau < P_MAX; tau++) {  //
-//                                r = 0;
-//                                for (int i = 0; i < TEMPLATE_SIZE; i++) {
-//                                    bl[i] = bufTemp[offset0 + tau + i];
-//                                }
-//                                for (int i = 0; i < TEMPLATE_SIZE; i++) {
-//                                    temp = al[i] * bl[i];
-//                                    r += temp;
-//                                }
-//                                if (r > rMax) {
-//                                    rMax = r;  /** 自己相関係数のピーク値 */
-//                                    pFound = tau;  /** 音データの基本周期 */
-//                                }
-//                            }
-//
-//                            /**
-//                             * bufTemp の2周期 (offset0 から pFound 2つ分) を cl に3周期分 copy (offset1 から pFound 3つ分)
-//                             */
-//                            for (int i = 0; i < pFound; i++) {
-//                                cl[offset1 + i] = bufTemp[offset0 + i];
-//                            }
-//                            for (int i = 0; i < pFound; i++) {
-//                                cl[offset1 + pFound + i] = (short) (bufTemp[offset0 + i] * (i / pFound));
-//                                cl[offset1 + pFound + i] += (short) (bufTemp[offset0 + pFound + i] * (1 - (i / pFound)));
-//                            }
-//                            for (int i = 0; i < pFound; i++) {
-//                                cl[offset1 + 2 * pFound + i] = bufTemp[offset0 + pFound + i];
-//                            }
-//                            offset0 = offset0 + 2 * pFound;
-//                            offset1 = offset1 + 3 * pFound;
-//                            Log.v("AudioRecord", "offset0 " + offset0);
-//                            Log.v("AudioRecord", "offset1 " + offset1);
-//                        }
-
-                        /**
-                         * cl で音データで埋まっているのは offset1 フレームまで
-                         * offset1 フレームの cl の音データを stereo に拡張して bufOutFifo にコピー
-                         */
-                        for (int i = 0; i < offset1; i++) {
-                            bufOutFifo.offer(cl[i]);
-                            bufOutFifo.offer(cl[i]);
+                        for (int x = 0; x < bufInSizeShort; x += pSize) {
+                            for (int i = 0; i < pSize; i++) {
+                                bufOutFifo.offer(bufIn[x + i]);
+                                bufOutFifo.offer(bufIn[x + i]);
+                            }
+                            for (int i = 0; i < pSize; i++) {
+                                bufOutFifo.offer(bufIn[x + i]);
+                                bufOutFifo.offer(bufIn[x + i]);
+                            }
                         }
 
-                        /**
-                         * offset0 フレームまでしか bufTemp を処理していない
-                         * 残りフレーム ((indent + bufInSizeShort) - offset0) フレームを bufTemp の先頭にコピー
-                         * indent の値を ((indent + bufInSizeShort) - offset0) に更新
-                         * clで音データで埋まっているのはoffset1 番目まで
-                         */
-//                        for (int i = 0; i < ((indent + bufInSizeShort) - offset0); i++) {
-//                            bufTempTemp[i] = bufTemp[offset0 + i];
-//                        }
-//                        for (int i = 0; i < ((indent + bufInSizeShort) - offset0); i++) {
-//                            bufTemp[i] = bufTempTemp[i];
-//                        }
-//                        indent = (indent + bufInSizeShort) - offset0;
-
-
-//
-//                        for (int i = 0; i < offset1; i++) {
-//                            // データ型を変換
-//                            bufOut[2 * i] = (short) (cl[i] * Short.MAX_VALUE);
-//                            bufOut[2 * i + 1] = (short) (cl[i] * Short.MAX_VALUE);
-//                        }
-//
-//                        /**
-//                         * stereo に変更かつ 1/2 倍速 にする
-//                         * bufTemp のうち bufOutFifo に含めるのは先頭 bufInSizeShort 分
-//                         * 残りの INDENT フレーム分 (bufTemp の bufInSizeShort ～ bufInSizeShort + INDENT) は次回の処理に回すため、bufTemp の先頭にコピーする
-//                         */
-//                        for (int i = 0; i < bufInSizeShort; i++) {
-//                            bufOutFifo.offer(bufTemp[i]);
-//                            bufOutFifo.offer(bufTemp[i]);
-//                            bufOutFifo.offer(bufTemp[i]);
-//                            bufOutFifo.offer(bufTemp[i]);
-//                        }
-//                        System.arraycopy(bufTemp, bufInSizeShort, bufTempTemp, 0, INDENT);
-//                        System.arraycopy(bufTempTemp, 0, bufTemp, 0, INDENT);
-                        /**
-                         * bufOutFifo から bufOut.length 分だけ audioTrack のリングバッファに入力
-                         */
                         for (int j = 0; j < bufOut.length; j++) {
-                            bufOut[j] = bufOutFifo.poll(); ///////////////////////////////////////////////////////////////////////////////////////pollしないで引っ張ってくる
-                            // わざと処理時間等しくする❓　audiorecordもたぶんリングバッファなので処理時間等しくしないといけないのか...? 周波数シフトを用いるか、マルチスレッドで処理部分を別スレッドにする
+                            bufOut[j] = bufOutFifo.poll();
                         }
                         audioTrack.write(bufOut, 0, bufOut.length);
-                        Log.v("AudioRecord", "bufOutFifoPush " + offset1 * 2);
-                        Log.v("AudioRecord", "bufOutFifo.length " + bufOutFifo.size());
-                        Log.v("AudioRecord", "bufOut.length " + bufOut.length);
-                        Log.v("AudioRecord", "bufTemp.length " + bufTemp.length);
-                        Log.v("AudioRecord", "cl.length " + cl.length);
-//                        Log.v("AudioRecord", "indent " + audioTrack.getPlaybackHeadPosition());
 
                     }
                     Log.v("AudioRecord", "stopRecording");
