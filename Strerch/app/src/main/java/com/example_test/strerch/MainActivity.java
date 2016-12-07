@@ -33,10 +33,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     int bufInSizeShort;
 
     int SAMPLING_RATE = 44100;
-    int INDENT = 500;
-
-//    int PMAX = 882;
-
 
 //    int fftSize = 4096;
 //    int fftOverlap = 2;
