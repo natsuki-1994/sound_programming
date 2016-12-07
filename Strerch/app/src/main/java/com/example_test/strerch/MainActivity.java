@@ -82,8 +82,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     short bufIn[] = new short[bufInSizeShort];
                     short bufOut[] = new short[bufInSizeShort * 2];
                     LinkedList<Short> bufOutFifo = new LinkedList<>();
-                    short bufTemp[] = new short[bufInSizeShort + INDENT];
-                    short bufTempTemp[] = new short[INDENT];
 
                     while (bIsRecording) {
                         /**
@@ -92,52 +90,77 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                          * INDENT フレームまでは前回のバッファの未処理フレームで埋まっている
                          */
                         audioRec.read(bufIn, 0, bufInSizeShort);
-                        System.arraycopy(bufIn, 0, bufTemp, INDENT, bufInSizeShort);
 
-                        // FFTインスタンス生成
-                        DoubleFFT_1D fft = new DoubleFFT_1D(size);
+                        /**
+                         * FFT インスタンスの生成
+                         * fft          ... もとの bufIn のデータ用
+                         * fftStretched ... 周波数領域で補完して時間軸方向に拡張したデータ用
+                         */
+                        DoubleFFT_1D fft = new DoubleFFT_1D(bufInSizeShort);
+                        DoubleFFT_1D fftStretched = new DoubleFFT_1D(bufInSizeShort * 2);
 
-                        // fftData ifftData
-                        double fftData[] = new double[size];
-                        double fftDataAmp[] = new double[size / 2];
-                        double fftDataPhase[] = new double[size / 2];
-                        double ifftData[] = new double[size];
-                        for (int i = 0; i < size; i++) {
-                            // データ型を変換し -1 - +1 に正規化
+                        /**
+                         * fftData      ... bufIn のデータ型を変換して -1 ～ +1 に正規化して FFT かけるデータ
+                         * fftDataAmp   ... fftData の振幅成分
+                         * fftDataPhase ... fftData の位相成分
+                         * ifftData     ... IFFT かけるデータで周波数成分で補完して時間軸で伸ばしたデータ
+                         */
+                        double fftData[] = new double[bufInSizeShort];
+                        double fftDataAmp[] = new double[bufInSizeShort / 2];
+                        double fftDataPhase[] = new double[bufInSizeShort / 2];
+                        double ifftData[] = new double[bufInSizeShort * 2];
+
+                        /**
+                         * データ型を short から double に変換し、-1 ～ +1 に正規化
+                         */
+                        for (int i = 0; i < bufInSizeShort; i++) {
                             fftData[i] = (bufIn[i] * 1.0) / Short.MAX_VALUE;
                         }
 
-                        // FFT実行
+                        /**
+                         * FFT実行
+                         * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の繰り返しとなる
+                         */
                         fft.realForward(fftData);
-                        // noise canceling
-                        for (int i = 0; i < size; i += 2) {
-                            // 振幅成分と位相成分
-                            fftDataAmp[i / 2] = Math.sqrt(Math.pow(fftData[i], 2) + Math.pow(fftData[i + 1], 2));
-                            fftDataPhase[i / 2] = Math.atan2(fftData[i + 1], fftData[i]);
-                            // 振幅成分から閾値一律マイナス
-                            fftDataAmp[i / 2] -= 1.0;
-                            if (fftDataAmp[i / 2] < 0) fftDataAmp[i / 2] = 0;
 
-                            ifftData[i] = fftDataAmp[i / 2] * Math.cos(fftDataPhase[i / 2]);
-                            ifftData[i + 1] = fftDataAmp[i / 2] * Math.sin(fftDataPhase[i / 2]);
+//                        /**
+//                         * noise canceling
+//                         */
+//                        for (int i = 0; i < bufInSizeShort; i += 2) {
+//                            /** 振幅成分と位相成分 */
+//                            fftDataAmp[i / 2] = Math.sqrt(Math.pow(fftData[i], 2) + Math.pow(fftData[i + 1], 2));
+//                            fftDataPhase[i / 2] = Math.atan2(fftData[i + 1], fftData[i]);
+//
+//                            /** 振幅成分から閾値一律マイナス */
+//                            fftDataAmp[i / 2] -= 1.0;
+//                            if (fftDataAmp[i / 2] < 0) fftDataAmp[i / 2] = 0;
+//
+//                            ifftData[i] = fftDataAmp[i / 2] * Math.cos(fftDataPhase[i / 2]);
+//                            ifftData[i + 1] = fftDataAmp[i / 2] * Math.sin(fftDataPhase[i / 2]);
+//                        }
+
+                        /**
+                         * fftData を補完して時間軸方向に伸ばす処理を行う
+                         */
+                        for (int i = 0; i < bufInSizeShort; i += 2) {
+                            ifftData[2 * i] = fftData[i];
+                            ifftData[2 * i + 1] = fftData[i + 1];
+                            ifftData[2 * i + 2] = fftData[i];
+                            ifftData[2 * i + 3] = fftData[i + 1];
                         }
-                        System.arraycopy(fftData, 0, ifftData, 0, size);
-                        // IFFT実行
-                        fft.realInverse(ifftData, true);
+
+                        /**
+                         * IFFT実行
+                         */
+                        fftStretched.realInverse(ifftData, true);
                         
                         /**
-                         * stereo に変更かつ 1/2 倍速 にする
-                         * bufTemp のうち bufOutFifo に含めるのは先頭 bufInSizeShort 分
-                         * 残りの INDENT フレーム分 (bufTemp の bufInSizeShort ～ bufInSizeShort + INDENT) は次回の処理に回すため、bufTemp の先頭にコピーする
+                         * stereo に変更して bufOutFifo にプッシュ
                          */
-                        for (int i = 0; i < bufInSizeShort; i++) {
-                            bufOutFifo.offer(bufTemp[i]);
-                            bufOutFifo.offer(bufTemp[i]);
-                            bufOutFifo.offer(bufTemp[i]);
-                            bufOutFifo.offer(bufTemp[i]);
+                        for (int i = 0; i < bufInSizeShort * 2; i++) {
+                            bufOutFifo.offer((short) (ifftData[i] * Short.MAX_VALUE));
+                            bufOutFifo.offer((short) (ifftData[i] * Short.MAX_VALUE));
                         }
-                        System.arraycopy(bufTemp, bufInSizeShort, bufTempTemp, 0, INDENT);
-                        System.arraycopy(bufTempTemp, 0, bufTemp, 0, INDENT);
 
                         /**
                          * bufOutFifo から bufOut.length 分だけ audioTrack のリングバッファに入力
@@ -256,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 SAMPLING_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        bufInSizeByte = 5000;
+        bufInSizeByte = 4096 * 2 * 2;  /** Short に換算したサイズが FFT (2 ** n) に適したサイズとなる */
         bufInSizeShort = bufInSizeByte / 2;
 
         /**
