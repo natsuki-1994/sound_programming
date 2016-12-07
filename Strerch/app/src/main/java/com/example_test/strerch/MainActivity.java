@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                      */
                     short bufIn[] = new short[bufInSizeShort];
                     short bufOut[] = new short[bufInSizeShort * 2];
-                    int fftSize = 512;
+                    int fftSize = 1024;
                     short bufTemp[] = new short[fftSize];
                     LinkedList<Short> bufOutFifo = new LinkedList<>();
 
@@ -276,7 +276,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 SAMPLING_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        bufInSizeByte = 4096;  /** Short に換算したサイズが FFT (2 ** n) に適したサイズとなる */
+        bufInSizeByte = 4096 * 2;  /** Short に換算したサイズが FFT (2 ** n) に適したサイズとなる */
         bufInSizeShort = bufInSizeByte / 2;
 
         /**
