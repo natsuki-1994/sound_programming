@@ -3,4 +3,7 @@
     <string name="button_start">START</string>
     <string name="button_stop">STOP</string>
     <string name="button_slow">SLOW</string>
+    <string name="title">TrackTitle</string>
+    <string name="artist">artist</string>
+    <string name="duration">0:00</string>
 </resources>
