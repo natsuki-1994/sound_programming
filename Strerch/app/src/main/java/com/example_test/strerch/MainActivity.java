@@ -16,6 +16,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -31,22 +32,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     int bufInSizeShort;
 
     int SAMPLING_RATE = 44100;
-    int INDENT = 500;
 
-//    int PMAX = 882;
-
-
-//    int fftSize = 4096;
-//    int fftOverlap = 2;
-//    int fftShift = fftSize / fftOverlap;
-//    double threshold = 0.5;
-//    double hanningWindow[] = new double[fftSize];
-
-//    void createHunningWindow() {
-//        for (int a = 0; a < fftSize; a++) {
-//            hanningWindow[a] = 0.5 - 0.5 * Math.cos(2 * Math.PI * (a / fftSize));
-//        }
-//    }
+    int playState = 0;  /** stop : 0 , play : 1, slow : 2 */
 
     private void requestRecordAudioPermission(){
         /** API のバージョンをチェック, API version < 23 なら何もしない */
@@ -80,155 +67,36 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     short bufIn[] = new short[bufInSizeShort];
                     short bufOut[] = new short[bufInSizeShort * 2];
                     LinkedList<Short> bufOutFifo = new LinkedList<>();
-                    short bufTemp[] = new short[bufInSizeShort + INDENT];
-                    short bufTempTemp[] = new short[INDENT];
 
                     while (bIsRecording) {
                         /**
                          * 音声データの読み込み
-                         * bufTemp の INDENT フレーム以降に bufIn をコピー
-                         * INDENT フレームまでは前回のバッファの未処理フレームで埋まっている
                          */
                         audioRec.read(bufIn, 0, bufInSizeShort);
-                        System.arraycopy(bufIn, 0, bufTemp, INDENT, bufInSizeShort);
 
-//                        // FFTインスタンス生成
-//                        DoubleFFT_1D fft = new DoubleFFT_1D(size);
-//
-//                        // fftData ifftData
-//                        double fftData[] = new double[size];
-//                        double fftDataAmp[] = new double[size / 2];
-//                        double fftDataPhase[] = new double[size / 2];
-//                        double ifftData[] = new double[size];
-//                        for (int i = 0; i < size; i++) {
-//                            // データ型を変換し -1 - +1 に正規化
-//                            fftData[i] = (bufIn[i] * 1.0) / Short.MAX_VALUE;
-//                        }
-//
-//                        // FFT実行
-//                        fft.realForward(fftData);
-//                        // noise canceling
-//                        for (int i = 0; i < size; i += 2) {
-//                            // 振幅成分と位相成分
-//                            fftDataAmp[i / 2] = Math.sqrt(Math.pow(fftData[i], 2) + Math.pow(fftData[i + 1], 2));
-//                            fftDataPhase[i / 2] = Math.atan2(fftData[i + 1], fftData[i]);
-//                            // 振幅成分から閾値一律マイナス
-//                            fftDataAmp[i / 2] -= 1.0;
-//                            if (fftDataAmp[i / 2] < 0) fftDataAmp[i / 2] = 0;
-//
-//                            ifftData[i] = fftDataAmp[i / 2] * Math.cos(fftDataPhase[i / 2]);
-//                            ifftData[i + 1] = fftDataAmp[i / 2] * Math.sin(fftDataPhase[i / 2]);
-//                        }
-//                        System.arraycopy(fftData, 0, ifftData, 0, size);
-//                        // IFFT実行
-//                        fft.realInverse(ifftData, true);
-
-                        /**
-                         * 音声の伸張
-                         */
-//                        int offset0 = 0;
-//                        int offset1 = 0;
-//                        int templateSize = 441;  // SAMPLINGRATE * 0.01
-//                        int pMin = 220;  // SAMPLINGRATE * 0.05
-//                        int pMax = 882;  // SAMPLINGRATE * 0.02
-//                        int p;  // 検出した周波数
-//
-//                        double al[] = new double[templateSize];
-//                        double bl[] = new double[templateSize];
-//                        double cl[] = new double[(int) ((bufSize / 2 + PMAX * 2) * 1.5)];  // bufOutと同じデータになる(フレーム数1/2) (出力直前にstereoに直してbufOutに格納)
-//                        double temp;  // 足し合わせて相関係数を求める際に用いる一時変数
-//                        double r;  //  足しあわされた相関係数
-//
-//                        while (offset0 + pMax * 2 < bufTempSize) {
-//                            for (int i = 0; i < templateSize; i++) {
-//                                al[i] = bufTemp[offset0 + i];
-//                            }
-//                            double rMax = 0.0;  // 相関係数のMax値
-//                            p = pMin;
-//                            for (int tau = pMin; tau < pMax; tau++) {  // pMinからpMaxまでtauずらしながら相関係数を計算
-//                                r = 0;
-//                                for (int i = 0; i < templateSize; i++) {
-//                                    bl[i] = bufTemp[offset0 + tau + i];
-//                                }
-//                                for (int i = 0; i < templateSize; i++) {
-//                                    temp = al[i] * bl[i];
-//                                    r += temp;
-//                                }
-//                                if (r > rMax) {
-//                                    rMax = r;  // 自己相関関数のピーク値
-//                                    p = tau;  // 音データの基本周期
-//                                }
-//                            }
-//                            /**
-//                             * bufTempの2周期をclに3周期分copy
-//                             */
-//                            for (int i = 0; i < p; i++) {
-//                                cl[offset1 + i] = bufTemp[offset0 + i];
-//                            }
-//                            for (int i = 0; i < p; i++) {
-//                                cl[offset1 + p + i] = bufTemp[offset0 + i] * (i / p);
-//                                cl[offset1 + p + i] += bufTemp[offset0 + p + i] * (1 - (i / p));
-//                            }
-//                            for (int i = 0; i < p; i++) {
-//                                cl[offset1 + 2 * p + i] = bufTemp[offset0 + p + i];
-//                            }
-//                            Log.v("AudioRecord", "offset0 " + offset0);
-//                            offset0 = offset0 + 2 * p;
-//                            offset1 = offset1 + 3 * p;
-//                        }
-//                        /**
-//                         * offset0 番目までしかbufTempを処理していない
-//                         * 残りフレーム(bufTempSize - offset0 フレーム)をbufTempの先頭にコピー
-//                         * indentの値を更新
-//                         * clで音データで埋まっているのはoffset1 番目まで
-//                         */
-//                        for (int i = 0; i < bufTempSize - offset0; i++) {
-//                            bufTempTemp[i] = bufTemp[offset0 + i];
-//                        }
-//                        for (int i = 0; i < bufTempSize; i++) {
-//                            if (i < bufTempSize - offset0) {
-//                                bufTemp[i] = bufTempTemp[i];
-//                            } else {
-//                                bufTemp[i] = 0;
-//                            }
-//                        }
-//
-//                        indent = bufTempSize - offset0;
-//                        Log.v("AudioRecord", "offset0 " + offset0);
-//                        Log.v("AudioRecord", "indent " + indent);
-//                        bufTempSize = size + indent;
-//
-//                        for (int i = 0; i < offset1; i++) {
-//                            // データ型を変換
-//                            bufOut[2 * i] = (short) (cl[i] * Short.MAX_VALUE);
-//                            bufOut[2 * i + 1] = (short) (cl[i] * Short.MAX_VALUE);
-//                        }
-//
-//                        // bufOutをoffset1 * 2 フレーム出力
-//                        audioTrack.write(bufOut, 0, offset1 * 2);
-
-//                          for (int j = 0; j < 2000; j++) {
-//                              bufTempTemp[j] = bufTemp[8000 + j];
-//                          }
-
-//                        for (int j = 0; j < INDENT; j++) {
-//                            bufTempTemp[j] = bufTemp[ReadShortSize + j];
-//                        }
-
-                        /**
-                         * stereo に変更かつ 1/2 倍速 にする
-                         * bufTemp のうち bufOutFifo に含めるのは先頭 bufInSizeShort 分
-                         * 残りの INDENT フレーム分 (bufTemp の bufInSizeShort ～ bufInSizeShort + INDENT) は次回の処理に回すため、bufTemp の先頭にコピーする
-                         */
-                        for (int i = 0; i < bufInSizeShort; i++) {
-                            bufOutFifo.offer(bufTemp[i]);
-                            bufOutFifo.offer(bufTemp[i]);
-                            bufOutFifo.offer(bufTemp[i]);
-                            bufOutFifo.offer(bufTemp[i]);
+                        if (playState == 1) {  /** state : normal */
+                            /**
+                             * stereo に変更する
+                             */
+                            for (int i = 0; i < bufInSizeShort; i++) {
+                                bufOutFifo.offer(bufIn[i]);
+                                bufOutFifo.offer(bufIn[i]);
+                            }
+                        } else if (playState == 2) {  /** state : slow */
+                            /**
+                             * stereo に変更かつ 1/2 倍速 にする
+                             */
+                            for (int i = 0; i < bufInSizeShort; i++) {
+                                bufOutFifo.offer(bufIn[i]);
+                                bufOutFifo.offer(bufIn[i]);
+                                bufOutFifo.offer(bufIn[i]);
+                                bufOutFifo.offer(bufIn[i]);
+                            }
                         }
-                        System.arraycopy(bufTemp, bufInSizeShort, bufTempTemp, 0, INDENT);
-                        System.arraycopy(bufTempTemp, 0, bufTemp, 0, INDENT);
 
+                        if (bIsRecording == false) {
+                            
+                        }
                         /**
                          * bufOutFifo から bufOut.length 分だけ audioTrack のリングバッファに入力
                          */
@@ -240,6 +108,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     }
                     Log.v("AudioRecord", "stopRecording");
                     audioRec.stop();
+                    bufOutFifo.clear();
                 }
             }).start();
         }
@@ -380,6 +249,50 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 bufInSizeByte * 2,
                 AudioTrack.MODE_STREAM);
 
+        findViewById(R.id.button_start).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (playState == 0) {  /** state : stop */
+                    playState = 1;  /** state -> normal  */
+                    audioTrack.play();
+                    recordingAndPlay();
+                } else if (playState == 2) {  /** state : slow */
+                    bIsRecording = false;
+                    audioTrack.stop();
+                    playState = 1;  /** state -> normal  */
+                    audioTrack.play();
+                    recordingAndPlay();
+                }  /** state : start ... 何もしない */
+            }
+        });
+
+        findViewById(R.id.button_stop).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (playState == 1 | playState == 2) {  /** state : normal or state : slow */
+                    audioTrack.stop();
+                    bIsRecording = false;
+                    playState = 0;  /** state -> stop  */
+                }  /** state : stop ... 何もしない */
+            }
+        });
+
+        findViewById(R.id.button_slow).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (playState == 0) {  /** state : stop */
+                    playState = 2;  /** state -> slow  */
+                    audioTrack.play();
+                    recordingAndPlay();
+                } else if (playState == 1) {  /** state : normal */
+                    bIsRecording = false;
+                    audioTrack.stop();
+                    playState = 2;  /** state -> slow  */
+                    audioTrack.play();
+                    recordingAndPlay();
+                }  /** state : slow ... 何もしない */
+            }
+        });
 //        findViewById(R.id.button1).setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {

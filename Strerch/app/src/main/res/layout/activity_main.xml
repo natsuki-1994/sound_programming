@@ -10,19 +10,33 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example_test.strerch.MainActivity">
 
-    <TextView
+    <Button
+        android:text="@string/button_start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        android:id="@+id/textView" />
+        android:id="@+id/button_start"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:background="@android:color/holo_blue_light" />
 
     <Button
-        android:text="Button"
+        android:text="@string/button_stop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="52dp"
-        android:layout_marginTop="42dp"
-        android:id="@+id/button1" />
+        android:id="@+id/button_stop"
+        android:layout_marginTop="40dp"
+        android:layout_below="@+id/button_start"
+        android:layout_alignStart="@+id/button_start"
+        android:background="@color/colorAccent" />
+
+    <Button
+        android:text="@string/button_slow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:id="@+id/button_slow"
+        android:layout_below="@+id/button_stop"
+        android:layout_alignStart="@+id/button_stop"
+        android:background="@android:color/holo_green_light" />
+
 </RelativeLayout>
