@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         }
 
                         if (bIsRecording == false) {
-                            
+
                         }
                         /**
                          * bufOutFifo から bufOut.length 分だけ audioTrack のリングバッファに入力
