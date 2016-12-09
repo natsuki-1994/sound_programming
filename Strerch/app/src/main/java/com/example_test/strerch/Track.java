@@ -48,8 +48,8 @@ public class Track {
         uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
     }
 
-    public static List getItems(Context activity) {
-        List tracks = new ArrayList();
+    public static List<Track> getItems(Context activity) {
+        List<Track> tracks = new ArrayList<>();
         ContentResolver resolver = activity.getContentResolver();
         Cursor cursor = resolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -58,6 +58,7 @@ public class Track {
                 null,
                 null
         );
+        assert cursor != null;
         while (cursor.moveToNext()) {
             if (cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)) < 3000) {
                 continue;
