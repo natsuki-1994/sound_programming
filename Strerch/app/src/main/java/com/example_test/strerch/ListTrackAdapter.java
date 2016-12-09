@@ -12,11 +12,11 @@ import java.util.List;
 
 import static java.lang.String.format;
 
-public class ListTrackAdapter extends ArrayAdapter<Track> {
+class ListTrackAdapter extends ArrayAdapter<Track> {
 
-    public LayoutInflater mInflater;
+    private LayoutInflater mInflater;
 
-    public ListTrackAdapter(Context context, List<Track> item) {
+    ListTrackAdapter(Context context, List<Track> item) {
         super(context, 0, item);
         mInflater =  (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
@@ -50,7 +50,7 @@ public class ListTrackAdapter extends ArrayAdapter<Track> {
         return convertView;
     }
 
-    public static class ViewHolder{
+    private static class ViewHolder{
         TextView  trackTextView;
         TextView  artistTextView;
         TextView  durationTextView;

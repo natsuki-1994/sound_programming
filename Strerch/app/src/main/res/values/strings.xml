@@ -1,9 +1,12 @@
 <resources>
-    <string name="app_name">Strerch</string>
+    <string name="app_name">Stretch</string>
     <string name="button_start">START</string>
     <string name="button_stop">STOP</string>
     <string name="button_slow">SLOW</string>
     <string name="title">TrackTitle</string>
     <string name="artist">artist</string>
     <string name="duration">0:00</string>
+    <string name="image">image</string>
+    <string name="album_title">Album Title</string>
+    <string name="tracks">tracks</string>
 </resources>

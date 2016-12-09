@@ -10,7 +10,7 @@ import android.provider.MediaStore;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Track {
+class Track {
 
     public long id;
     public long albumId;
@@ -23,7 +23,7 @@ public class Track {
     public long duration;
     public int trackNo;
 
-    public static final String[] COLUMNS = {
+    private static final String[] COLUMNS = {
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.TITLE,
@@ -35,7 +35,7 @@ public class Track {
             MediaStore.Audio.Media.TRACK,
     };
 
-    public Track(Cursor cursor) {
+    private Track(Cursor cursor) {
         id = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
         path = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
         title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));

@@ -99,9 +99,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             }
                         }
 
-                        if (bIsRecording == false) {
-
-                        }
+//                        if (bIsRecording == false) {
+//
+//                        }
                         /**
                          * bufOutFifo から bufOut.length 分だけ audioTrack のリングバッファに入力
                          */
@@ -311,9 +311,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public boolean onCreateOptionsMenu(Menu menu) {
 //        getMenuInflater().inflate(R.menu.main, menu);
 
-        List<Track> tracks = Track.getItems(this);
-        ListView trackList = (ListView) findViewById(R.id.list);
-        ListTrackAdapter adapter = new ListTrackAdapter(this, tracks);
+//        List<Track> tracks = Track.getItems(this);
+//        ListView trackList = (ListView) findViewById(R.id.list);
+//        ListTrackAdapter adapter = new ListTrackAdapter(this, tracks);
+//        trackList.setAdapter(adapter);
+
+        List<Album> albums = Album.getItems(this);
+        ListView trackList = (ListView)findViewById(R.id.list);
+        ListAlbumAdapter adapter = new ListAlbumAdapter(this, albums);
         trackList.setAdapter(adapter);
 
         return true;
