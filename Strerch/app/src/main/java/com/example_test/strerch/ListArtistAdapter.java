@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
-public class ListArtistAdapter extends ArrayAdapter<Artist> {
+class ListArtistAdapter extends ArrayAdapter<Artist> {
 
     private LayoutInflater mInflater;
 

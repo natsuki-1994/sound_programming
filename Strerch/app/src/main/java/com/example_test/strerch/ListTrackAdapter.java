@@ -23,7 +23,7 @@ class ListTrackAdapter extends ArrayAdapter<Track> {
 
     @NonNull
     @Override
-    public View getView(int position, View convertView, @NonNull ViewGroup parent){
+    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         Track item = getItem(position);
         ViewHolder holder;
 
