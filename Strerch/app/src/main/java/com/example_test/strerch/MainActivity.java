@@ -12,11 +12,10 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
+import android.view.Menu;
+import android.widget.ListView;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -37,8 +36,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void requestRecordAudioPermission(){
         /** API のバージョンをチェック, API version < 23 なら何もしない */
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
+        }
+        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
     }
 
@@ -249,50 +254,50 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 bufInSizeByte * 2,
                 AudioTrack.MODE_STREAM);
 
-        findViewById(R.id.button_start).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (playState == 0) {  /** state : stop */
-                    playState = 1;  /** state -> normal  */
-                    audioTrack.play();
-                    recordingAndPlay();
-                } else if (playState == 2) {  /** state : slow */
-                    bIsRecording = false;
-                    audioTrack.stop();
-                    playState = 1;  /** state -> normal  */
-                    audioTrack.play();
-                    recordingAndPlay();
-                }  /** state : start ... 何もしない */
-            }
-        });
-
-        findViewById(R.id.button_stop).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (playState == 1 | playState == 2) {  /** state : normal or state : slow */
-                    audioTrack.stop();
-                    bIsRecording = false;
-                    playState = 0;  /** state -> stop  */
-                }  /** state : stop ... 何もしない */
-            }
-        });
-
-        findViewById(R.id.button_slow).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (playState == 0) {  /** state : stop */
-                    playState = 2;  /** state -> slow  */
-                    audioTrack.play();
-                    recordingAndPlay();
-                } else if (playState == 1) {  /** state : normal */
-                    bIsRecording = false;
-                    audioTrack.stop();
-                    playState = 2;  /** state -> slow  */
-                    audioTrack.play();
-                    recordingAndPlay();
-                }  /** state : slow ... 何もしない */
-            }
-        });
+//        findViewById(R.id.button_start).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (playState == 0) {  /** state : stop */
+//                    playState = 1;  /** state -> normal  */
+//                    audioTrack.play();
+//                    recordingAndPlay();
+//                } else if (playState == 2) {  /** state : slow */
+//                    bIsRecording = false;
+//                    audioTrack.stop();
+//                    playState = 1;  /** state -> normal  */
+//                    audioTrack.play();
+//                    recordingAndPlay();
+//                }  /** state : start ... 何もしない */
+//            }
+//        });
+//
+//        findViewById(R.id.button_stop).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (playState == 1 | playState == 2) {  /** state : normal or state : slow */
+//                    audioTrack.stop();
+//                    bIsRecording = false;
+//                    playState = 0;  /** state -> stop  */
+//                }  /** state : stop ... 何もしない */
+//            }
+//        });
+//
+//        findViewById(R.id.button_slow).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (playState == 0) {  /** state : stop */
+//                    playState = 2;  /** state -> slow  */
+//                    audioTrack.play();
+//                    recordingAndPlay();
+//                } else if (playState == 1) {  /** state : normal */
+//                    bIsRecording = false;
+//                    audioTrack.stop();
+//                    playState = 2;  /** state -> slow  */
+//                    audioTrack.play();
+//                    recordingAndPlay();
+//                }  /** state : slow ... 何もしない */
+//            }
+//        });
 //        findViewById(R.id.button1).setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {
@@ -300,5 +305,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //                recordingAndPlay();
 //            }
 //        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+//        getMenuInflater().inflate(R.menu.main, menu);
+
+        List<Track> tracks = Track.getItems(this);
+        ListView trackList = (ListView) findViewById(R.id.list);
+        ListTrackAdapter adapter = new ListTrackAdapter(this, tracks);
+        trackList.setAdapter(adapter);
+
+        return true;
     }
 }
