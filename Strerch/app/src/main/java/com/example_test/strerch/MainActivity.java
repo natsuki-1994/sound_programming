@@ -316,9 +316,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //        ListTrackAdapter adapter = new ListTrackAdapter(this, tracks);
 //        trackList.setAdapter(adapter);
 
-        List<Album> albums = Album.getItems(this);
+        List<Artist> artists = Artist.getItems(this);
         ListView trackList = (ListView)findViewById(R.id.list);
-        ListAlbumAdapter adapter = new ListAlbumAdapter(this, albums);
+        ListArtistAdapter adapter = new ListArtistAdapter(this, artists);
         trackList.setAdapter(adapter);
 
         return true;

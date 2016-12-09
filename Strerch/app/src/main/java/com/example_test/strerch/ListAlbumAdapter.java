@@ -26,7 +26,7 @@ class ListAlbumAdapter extends ArrayAdapter<Album> {
 
     @NonNull
     @Override
-    public View getView(int position, View convertView, @NonNull ViewGroup parent){
+    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
         Album item = getItem(position);
         ViewHolder holder;
 
