@@ -110,8 +110,8 @@ public class RootMenu extends Fragment {
             ListAlbumAdapter adapter = new ListAlbumAdapter(activity, albums);
             albumList.setAdapter(adapter);
 
-//            albumList.setOnItemClickListener(activity.AlbumClickListener);
-//            albumList.setOnItemLongClickListener(activity.AlbumLongClickListener);
+            albumList.setOnItemClickListener(activity.AlbumClickListener);
+            albumList.setOnItemLongClickListener(activity.AlbumLongClickListener);
 
             return v;
         }

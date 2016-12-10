@@ -18,4 +18,5 @@
     <string name="back">BACK</string>
     <string name="st_sk">St/Sk</string>
     <string name="skip">SKIP</string>
+    <string name="albumtitle">AlbumTitle</string>
 </resources>

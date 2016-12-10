@@ -48,7 +48,7 @@ class Track {
         uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
     }
 
-    public static List<Track> getItems(Context activity) {
+    static List<Track> getItems(Context activity) {
         List<Track> tracks = new ArrayList<>();
         ContentResolver resolver = activity.getContentResolver();
         Cursor cursor = resolver.query(
@@ -63,6 +63,27 @@ class Track {
             if (cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)) < 3000) {
                 continue;
             }
+            tracks.add(new Track(cursor));
+        }
+        cursor.close();
+        return tracks;
+    }
+
+    static List<Track> getItemsByAlbum(Context activity, long albumID) {
+        List<Track> tracks = new ArrayList<>();
+        ContentResolver resolver = activity.getContentResolver();
+        String[] SELECTION_ARG = {""};
+        SELECTION_ARG[0] = String.valueOf(albumID);
+        Cursor cursor = resolver.query(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                Track.COLUMNS,
+                MediaStore.Audio.Media.ALBUM_ID + "= ?",
+                SELECTION_ARG,
+                null
+        );
+        assert cursor != null;
+        while (cursor.moveToNext()) {
+            if (cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)) < 3000) { continue; }
             tracks.add(new Track(cursor));
         }
         cursor.close();
