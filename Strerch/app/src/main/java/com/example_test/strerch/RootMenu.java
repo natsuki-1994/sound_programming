@@ -14,21 +14,38 @@ import android.widget.ListView;
 
 import java.util.List;
 
+/**
+ * RootMenu は MainActivity 直下の Fragment (activity_main.xml の R.id.root)
+ */
 public class RootMenu extends Fragment {
 
+    /**
+     * Pager で Track 一覧・Artist 一覧・Album 一覧などの Fragment をスワイプで切り替える
+     * MainActivity class
+     *   --- RootMenu class
+     *         --- menu_home    (HomeSectionFragment class)
+     *         --- menu_tracks  (TrackSectionFragment class)
+     *         --- menu_artists (ArtistSectionFragment class)
+     *         --- menu_albums  (AlbumSectionFragment class)
+     *   --- AlbumMenu class
+     *   --- ArtistMenu class
+     */
     SectionsPagerAdapter mSectionsPagerAdapter;
     ViewPager mViewPager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        /**
+         * menu layout を捕まえて膨らませる (inflate させる)
+         * sectionPagerAdapter を mViewPager (R.id.pager) に setAdapter
+         */
         View rootView = inflater.inflate(R.layout.menu, container, false);
-
         mSectionsPagerAdapter = new SectionsPagerAdapter(getChildFragmentManager());
         mViewPager = (ViewPager) rootView.findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
         /**
-        /* PagetTab カスタマイズ
+        /* PagerTab のカスタマイズ
          */
         PagerTabStrip strip = (PagerTabStrip) rootView.findViewById(R.id.pager_title_strip);
         strip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
@@ -38,10 +55,18 @@ public class RootMenu extends Fragment {
         return rootView;
     }
 
+    /**
+     * 上記の onCreateView にて使用
+     */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         SectionsPagerAdapter(FragmentManager fm) { super(fm); }
 
+        /**
+         * ページをスワイプするごとに R.id.pager に表示する Fragment を変更
+         * @param position
+         * @return fragment
+         */
         @Override
         public Fragment getItem(int position) {
             Fragment fragment = null;
@@ -57,6 +82,11 @@ public class RootMenu extends Fragment {
         @Override
         public int getCount() { return 4; }
 
+        /**
+         * ページをスワイプするごとに R.id.pager_title_strip に表示する ページ名 を変更
+         * @param position
+         * @return
+         */
         @Override
         public CharSequence getPageTitle(int position) {
             switch (position) {
@@ -87,6 +117,9 @@ public class RootMenu extends Fragment {
             MainActivity activity = (MainActivity) getActivity();
             List<Track> tracks = Track.getItems(activity);
 
+            /**
+             * menu_tracks を捕まえて膨らませる (inflate する)
+             */
             View v = inflater.inflate(R.layout.menu_tracks, container,false);
             ListView trackList = (ListView) v.findViewById(R.id.list);
             ListTrackAdapter adapter = new ListTrackAdapter(activity, tracks);
@@ -105,11 +138,18 @@ public class RootMenu extends Fragment {
             MainActivity activity = (MainActivity) getActivity();
             List<Album> albums = Album.getItems(activity);
 
+            /**
+             * menu_albums を捕まえて膨らませる (inflate する)
+             */
             View v = inflater.inflate(R.layout.menu_albums, container, false);
             ListView albumList = (ListView) v.findViewById(R.id.list);
             ListAlbumAdapter adapter = new ListAlbumAdapter(activity, albums);
             albumList.setAdapter(adapter);
 
+            /**
+             * album をクリックしたときに RootMenu の Fragment から AlbumMenu の Fragment に変更
+             * メソッドは MainActivity で定義
+             */
             albumList.setOnItemClickListener(activity.AlbumClickListener);
             albumList.setOnItemLongClickListener(activity.AlbumLongClickListener);
 
@@ -125,6 +165,9 @@ public class RootMenu extends Fragment {
             MainActivity activity = (MainActivity) getActivity();
             List<Artist> artists = Artist.getItems(activity);
 
+            /**
+             * menu_artists を捕まえて膨らませる (inflate する)
+             */
             View v = inflater.inflate(R.layout.menu_artists,container,false);
             ListView artistList = (ListView) v.findViewById(R.id.list);
             ListArtistAdapter adapter = new ListArtistAdapter(activity, artists);

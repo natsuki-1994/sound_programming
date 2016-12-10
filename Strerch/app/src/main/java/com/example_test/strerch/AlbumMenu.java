@@ -15,10 +15,15 @@ public class AlbumMenu extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View partView =inflater.inflate(R.layout.part_album, container, false);
+        /**
+         * part_album を捕まえて膨らませる (inflate する)
+         * 上部には単純にコンテンツを set するだけ
+         * 下部のリストは setAdapter を使用する必要がある
+         */
+        View partView = inflater.inflate(R.layout.part_album, container, false);
 
         MainActivity activity = (MainActivity) getActivity();
-        Album album_item = activity.getFocusedAlbum();
+        Album album_item = activity.getFocusedAlbum();  /** MainActivity から focus されているアルバムを引っ張ってくる */
 
         TextView album_title =  (TextView) partView.findViewById(R.id.title);
         TextView album_artist = (TextView) partView.findViewById(R.id.artist);
@@ -40,8 +45,11 @@ public class AlbumMenu extends Fragment {
         partView.findViewById(R.id.album_info).setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) {} });
         partView.findViewById(R.id.tracktitle).setOnClickListener(new View.OnClickListener() { @Override public void onClick(View v) {} });
 
+        /**
+         * 以下が list に setAdapter している部分
+         * album_item は focus されているアルバム
+         */
         List<Track> tracks  = Track.getItemsByAlbum(getActivity(), album_item.albumId);
-
         ListView trackList = (ListView) partView.findViewById(R.id.list);
         ListTrackAdapter adapter = new ListTrackAdapter(activity, tracks);
         trackList.setAdapter(adapter);

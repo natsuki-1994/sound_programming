@@ -27,10 +27,11 @@ import java.util.List;
 
 public class MainActivity extends FragmentActivity implements SensorEventListener {
 
-    enum FrgmType {fRoot, fAlbum}
-    private FrgmType fTop;
+    enum FrgmType {fRoot, fAlbum, fArtist}  /** Fragment のタイプ */
+    private FrgmType fTop;  /** 現在表示している Fragment を格納 */
 
     private static Album focusedAlbum;
+    private static Artist focusedArtist;
 
     AudioRecord audioRec = null;
     AudioTrack audioTrack;
@@ -44,7 +45,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     int playState = 0;  /** stop : 0 , play : 1, slow : 2 */
 
-    private void requestRecordAudioPermission(){
+    private void requestPermission(){
         /** API のバージョンをチェック, API version < 23 なら何もしない */
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
@@ -215,14 +216,21 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main);  /** layout を設定 */
+        requestPermission();  /** API23 以上で Permission 取得を Activity で行う */
 
+        /**
+         * Fragment の初期化
+         * onCreate では activity_main.xml の R.id.root には RootMenu Fragment を配置
+         */
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(R.id.root, new RootMenu(),"Root");
-        ft.commit();
+        ft.replace(R.id.root, new RootMenu(), "Root");  /** Fragment をここで設定 */
+        ft.commit();  /** Fragment をコミット */
 
-        requestRecordAudioPermission();  /** 録音などの Permission 取得を Activity で行う必要がある (最新 API で変更があったらしい) */
+        /**
+         * Sensor の初期化
+         */
         mRegisteredSensor = false;
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);  /** SensorManager の初期化 */
 
@@ -252,6 +260,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 bufInSizeByte);
+
         /**
          * AudioTrack の初期化
          *  電話の耳からの出力
@@ -325,15 +334,12 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 //        getMenuInflater().inflate(R.menu.main, menu);
-
-//        List<Track> tracks = Track.getItems(this);
-//        ListView trackList = (ListView) findViewById(R.id.list);
-//        ListTrackAdapter adapter = new ListTrackAdapter(this, tracks);
-//        trackList.setAdapter(adapter);
-
         return true;
     }
 
+    /**
+     * param に指定した Fragment を activity_main.xml の R.id.root にセットするメソッド
+     */
     public void setNewFragment(FrgmType CallFragment) {
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
@@ -341,35 +347,76 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         switch (CallFragment) {
             case fRoot : ft.replace(R.id.root, new RootMenu(), "Root"); break;
             case fAlbum : ft.replace(R.id.root, new AlbumMenu(), "album"); break;
+            case fArtist : ft.replace(R.id.root, new AlbumMenu(), "artist"); break;
         }
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.addToBackStack(null);
         ft.commit();
     }
 
-//    public void popBackFragment() {
-//        FragmentManager fm = getSupportFragmentManager();
-//        fm.popBackStack();
-//    }
-
+    /**
+     * focusAlbum ...
+     *   AlbumClickListener で呼ばれる
+     *   Album 一覧メニューでクリックされた item を focusedAlbum に格納
+     * getFocusedAlbum ...
+     *   AlbumMenu.java で呼ばれる
+     *   focusedAlbumを返すメソッド
+     */
     public void	focusAlbum(Album item) { if (item != null) focusedAlbum = item; }
     public Album getFocusedAlbum() { return focusedAlbum; }
+    public void focusArtist(Artist item) { if (item != null) focusedArtist = item; }
+    public Artist getFocusedArtist() { return focusedArtist; }
 
+    /**
+     * アルバム一覧をクリックしたときの動作
+     * クリックした AdapterView の親要素が ListView
+     * focusAlbum を実行し、AlbumMenu Fragment に変更
+     */
     public AdapterView.OnItemClickListener AlbumClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             ListView lv = (ListView) parent;
-            focusAlbum((Album)lv.getItemAtPosition(position));
+            focusAlbum((Album) lv.getItemAtPosition(position));
             setNewFragment(FrgmType.fAlbum);
         }
     };
 
+    /**
+     * アルバム一覧をクリックしたときの動作確認のための LongClick 動作
+     */
     public  AdapterView.OnItemLongClickListener AlbumLongClickListener = new AdapterView.OnItemLongClickListener() {
         @Override
-        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id){
-            ListView lv = (ListView)parent;
-            Album item = (Album)lv.getItemAtPosition(position);
-            Toast.makeText(MainActivity.this, "LongClick:"+item.album, Toast.LENGTH_LONG).show();
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            ListView lv = (ListView) parent;
+            Album item = (Album) lv.getItemAtPosition(position);
+            Toast.makeText(MainActivity.this, "LongClick: " + item.album, Toast.LENGTH_LONG).show();
+            return true;
+        }
+    };
+
+    /**
+     * アーティスト一覧をクリックしたときの動作
+     * クリックした AdapterView の親要素が ListView
+     * focusArtist を実行し、ArtistMenu Fragment に変更
+     */
+    public AdapterView.OnItemClickListener ArtistClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            ListView lv = (ListView) parent;
+            focusArtist((Artist) lv.getItemAtPosition(position));
+            setNewFragment(FrgmType.fArtist);
+        }
+    };
+
+    /**
+     * アーティスト一覧をクリックしたときの動作確認のための LongClick 動作
+     */
+    public  AdapterView.OnItemLongClickListener ArtistLongClickListener = new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            ListView lv = (ListView) parent;
+            Artist item = (Artist) lv.getItemAtPosition(position);
+            Toast.makeText(MainActivity.this, "LongClick: " + item.artist, Toast.LENGTH_LONG).show();
             return true;
         }
     };

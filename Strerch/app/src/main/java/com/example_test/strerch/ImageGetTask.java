@@ -5,17 +5,28 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.widget.ImageView;
 
+/**
+ * メインスレッドとは別スレッドで非同期処理が行える AsyncTask を継承
+ */
 class ImageGetTask extends AsyncTask<String, Void, Bitmap> {
 
     private ImageView image;
     private String tag;
 
+    /**
+     * image ... 表示したい ImageView (holder.artworkImageView)
+     * tag   ... アルバムアート画像の path
+     */
     ImageGetTask(ImageView _image){
         super();
         image = _image;
         tag = image.getTag().toString();
     }
 
+    /**
+     * cache から画像をとってくる
+     * なければ decode して cache に setImage
+     */
     @Override
     protected Bitmap doInBackground(String ... params) {
         Bitmap bitmap = ImageCache.getImage(params[0]);
@@ -26,12 +37,21 @@ class ImageGetTask extends AsyncTask<String, Void, Bitmap> {
         return bitmap;
     }
 
+    /**
+     * 最終的に holder.artworkImageView に setImageBitmap するメソッド
+     */
     @Override
     protected void onPostExecute(Bitmap result) {
         if (tag.equals(image.getTag())) image.setImageBitmap(result);
     }
 
-
+    /**
+     * bitmap をデコードするメソッド
+     * @param path
+     * @param width
+     * @param height
+     * @return path と options を指定して BitmapFactory.decodeFile でデコードした結果
+     */
     private static Bitmap decodeBitmap(String path, int width, int height) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
