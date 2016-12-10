@@ -371,6 +371,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
      * アルバム一覧をクリックしたときの動作
      * クリックした AdapterView の親要素が ListView
      * focusAlbum を実行し、AlbumMenu Fragment に変更
+     * focusedAlbum は AlbumMenu 内で使用
      */
     public AdapterView.OnItemClickListener AlbumClickListener = new AdapterView.OnItemClickListener() {
         @Override
@@ -398,6 +399,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
      * アーティスト一覧をクリックしたときの動作
      * クリックした AdapterView の親要素が ListView
      * focusArtist を実行し、ArtistMenu Fragment に変更
+     * focusedArtist は ArtistMenu 内で使用
      */
     public AdapterView.OnItemClickListener ArtistClickListener = new AdapterView.OnItemClickListener() {
         @Override
