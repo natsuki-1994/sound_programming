@@ -12,15 +12,21 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.Menu;
-import android.widget.ListView;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends FragmentActivity implements SensorEventListener {
+
+    enum FrgmType {fRoot, fAlbum}
+    private FrgmType fTop;
+
+    private static Album focusedAlbum;
 
     AudioRecord audioRec = null;
     AudioTrack audioTrack;
@@ -207,6 +213,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        ft.replace(R.id.root, new RootMenu(),"Root");
+        ft.commit();
+
         requestRecordAudioPermission();  /** 録音などの Permission 取得を Activity で行う必要がある (最新 API で変更があったらしい) */
         mRegisteredSensor = false;
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);  /** SensorManager の初期化 */
@@ -316,11 +327,44 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 //        ListTrackAdapter adapter = new ListTrackAdapter(this, tracks);
 //        trackList.setAdapter(adapter);
 
-        List<Artist> artists = Artist.getItems(this);
-        ListView trackList = (ListView)findViewById(R.id.list);
-        ListArtistAdapter adapter = new ListArtistAdapter(this, artists);
-        trackList.setAdapter(adapter);
-
         return true;
     }
+
+//    public void setNewFragment(FrgmType CallFragment) {
+//        FragmentManager fm = getSupportFragmentManager();
+//        FragmentTransaction ft = fm.beginTransaction();
+//        fTop = CallFragment;
+//        switch (CallFragment) {
+//            case fRoot : ft.replace(R.id.root, new RootMenu(), "Root"); break;
+//            case fAlbum : ft.replace(R.id.root, new AlbumMenu(), "album"); break;
+//        }
+//        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+//        ft.addToBackStack(null);
+//        ft.commit();
+//    }
+
+//    public void	  focusAlbum(Album item)  {if(item != null) focusedAlbum  = item;}
+//    public Album  getFocusedAlbum()       {return focusedAlbum;}
+
+//    public AdapterView.OnItemClickListener  AlbumClickListener
+//            = new AdapterView.OnItemClickListener(){
+//        @Override
+//        public void onItemClick(AdapterView<?> parent, View view,
+//                                int position, long id) {
+//            ListView lv = (ListView)parent;
+//            focusAlbum((Album)lv.getItemAtPosition(position));
+//            setNewFragment(FrgmType.fAlbum);
+//        }
+//    };
+
+//    public  AdapterView.OnItemLongClickListener AlbumLongClickListener = new AdapterView.OnItemLongClickListener() {
+//        @Override
+//        public boolean onItemLongClick(AdapterView<?> parent, View view,
+//                                       int position, long id){
+//            ListView lv = (ListView)parent;
+//            Album item = (Album)lv.getItemAtPosition(position);
+//            Toast.makeText(MainActivity.this, "LongClick:"+item.album, Toast.LENGTH_LONG).show();
+//            return true;
+//        }
+//    };
 }
