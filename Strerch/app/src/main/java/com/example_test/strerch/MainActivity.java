@@ -2,10 +2,8 @@ package com.example_test.strerch;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -18,14 +16,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
+import java.io.IOException;
 import java.util.LinkedList;
-import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener {
+public class MainActivity extends AppCompatActivity {
 
     AudioRecord audioRec = null;
     AudioTrack audioTrack;
     boolean bIsRecording = false;
+    /**
+     * 音楽再生用
+     */
+    AudioTrack audioTrackMusic;
+    byte[] mByteArray = null;
 
     int bufInSizeByteMin;
     int bufInSizeByte;
@@ -114,87 +117,108 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    /**
-     * スマホを初めて連続して3回以上降ったときに recordingAndPlay メソッド実行
-     */
-    private static final int FORCE_THRESHOLD = 550;
-    private static final int TIME_THRESHOLD = 100;
-    private static final int SHAKE_TIMEOUT = 500;
-    private static final int SHAKE_DURATION = 100;
-    private static final int SHAKE_COUNT = 3;
+    private void musicPlay() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                /** AudioTrack を再生状態に */
+                Log.v("audio", "start");
+                audioTrackMusic.play();
 
-    private SensorManager mSensorManager;
-    public boolean mRegisteredSensor;
-    private float mLastX = -1.0f, mLastY = -1.0f, mLastZ = -1.0f;
-    private long mLastTime;
-    private int mShakeCount = 0;
-    private long mLastShake;
-    private long mLastForce;
-    private int recordingAndPlayFlag = 0;
+                Log.v("audio", String.valueOf(mByteArray.length));
+                /** 音声データを書き込む */
+                audioTrackMusic.write(mByteArray, 46, mByteArray.length - 46);
+                Log.v("audio", "write");
+                /** AudioTrack を停止 */
+                audioTrackMusic.stop();
 
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        /** SensorManager.SENSOR_ACCELEROMETER = 加速度センサーでなければreturn */
-        if (sensorEvent.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
-
-        /** 現在時刻を取得 */
-        long now = System.currentTimeMillis();
-
-        /** 最後に動かしてから500ms経過、連続していないのでカウントを0に戻す */
-        if ((now - mLastForce) > SHAKE_TIMEOUT) {
-            mShakeCount = 0;
-        }
-
-        /** 最後に動かしてから100ms経過していたら以下の処理 */
-        if ((now - mLastTime) > TIME_THRESHOLD) {
-            long diff = now - mLastTime;
-            float speed = Math.abs(sensorEvent.values[0] + sensorEvent.values[1] + sensorEvent.values[2] - mLastX - mLastY - mLastZ) / diff * 10000;
-
-            /**
-             * 350より大きい速度で、振られたのが3回目（以上）でかつ、最後にシェイクを検知してから
-             * 100ms以上経過していたら、今の時間を残してシェイク回数を0に戻し、recordingAndPlay メソッドを呼び出す。
-             */
-            if (speed > FORCE_THRESHOLD) {
-                if ((++mShakeCount >= SHAKE_COUNT) && now - mLastShake > SHAKE_DURATION && (recordingAndPlayFlag == 0)) {
-                    mLastShake = now;
-                    mShakeCount = 0;
-                    recordingAndPlayFlag = 1;
-                    audioTrack.play();
-                    recordingAndPlay();
-                    return;
-                }
-                mLastForce = now;
+                /** AudioTrack をフラッシュ */
+                audioTrackMusic.flush();
             }
-            mLastTime = now;
-            mLastX = sensorEvent.values[0];
-            mLastY = sensorEvent.values[1];
-            mLastZ = sensorEvent.values[2];
-        }
+        }).start();
     }
 
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-        /** 今回は特に設定しない */
-    }
+//    /**
+//     * スマホを初めて連続して3回以上降ったときに recordingAndPlay メソッド実行
+//     */
+//    private static final int FORCE_THRESHOLD = 550;
+//    private static final int TIME_THRESHOLD = 100;
+//    private static final int SHAKE_TIMEOUT = 500;
+//    private static final int SHAKE_DURATION = 100;
+//    private static final int SHAKE_COUNT = 3;
+//
+//    private SensorManager mSensorManager;
+//    public boolean mRegisteredSensor;
+//    private float mLastX = -1.0f, mLastY = -1.0f, mLastZ = -1.0f;
+//    private long mLastTime;
+//    private int mShakeCount = 0;
+//    private long mLastShake;
+//    private long mLastForce;
+//    private int recordingAndPlayFlag = 0;
+//
+//    @Override
+//    public void onSensorChanged(SensorEvent sensorEvent) {
+//        /** SensorManager.SENSOR_ACCELEROMETER = 加速度センサーでなければreturn */
+//        if (sensorEvent.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
+//
+//        /** 現在時刻を取得 */
+//        long now = System.currentTimeMillis();
+//
+//        /** 最後に動かしてから500ms経過、連続していないのでカウントを0に戻す */
+//        if ((now - mLastForce) > SHAKE_TIMEOUT) {
+//            mShakeCount = 0;
+//        }
+//
+//        /** 最後に動かしてから100ms経過していたら以下の処理 */
+//        if ((now - mLastTime) > TIME_THRESHOLD) {
+//            long diff = now - mLastTime;
+//            float speed = Math.abs(sensorEvent.values[0] + sensorEvent.values[1] + sensorEvent.values[2] - mLastX - mLastY - mLastZ) / diff * 10000;
+//
+//            /**
+//             * 350より大きい速度で、振られたのが3回目（以上）でかつ、最後にシェイクを検知してから
+//             * 100ms以上経過していたら、今の時間を残してシェイク回数を0に戻し、recordingAndPlay メソッドを呼び出す。
+//             */
+//            if (speed > FORCE_THRESHOLD) {
+//                if ((++mShakeCount >= SHAKE_COUNT) && now - mLastShake > SHAKE_DURATION && (recordingAndPlayFlag == 0)) {
+//                    mLastShake = now;
+//                    mShakeCount = 0;
+//                    recordingAndPlayFlag = 1;
+//                    audioTrack.play();
+//                    recordingAndPlay();
+//                    return;
+//                }
+//                mLastForce = now;
+//            }
+//            mLastTime = now;
+//            mLastX = sensorEvent.values[0];
+//            mLastY = sensorEvent.values[1];
+//            mLastZ = sensorEvent.values[2];
+//        }
+//    }
+//
+//    @Override
+//    public void onAccuracyChanged(Sensor sensor, int i) {
+//        /** 今回は特に設定しない */
+//    }
 
     @Override
     protected void onResume() {
         super.onResume();
-        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
-        if (sensors.size() > 0) {
-            Sensor sensor = sensors.get(0);
-            mRegisteredSensor = mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME);
-            mRegisteredSensor = true;
-        }
+//        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
+//        if (sensors.size() > 0) {
+//            Sensor sensor = sensors.get(0);
+//            mRegisteredSensor = mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME);
+//            mRegisteredSensor = true;
+//        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mSensorManager != null) {
-            mSensorManager.unregisterListener(this);
-            mSensorManager = null;
-        }
+//        if (mSensorManager != null) {
+//            mSensorManager.unregisterListener(this);
+//            mSensorManager = null;
+//        }
     }
 
     @Override
@@ -203,8 +227,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         setContentView(R.layout.activity_main);
 
         requestRecordAudioPermission();  /** 録音などの Permission 取得を Activity で行う必要がある (最新 API で変更があったらしい) */
-        mRegisteredSensor = false;
-        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);  /** SensorManager の初期化 */
+//        mRegisteredSensor = false;
+//        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);  /** SensorManager の初期化 */
 
         /**
          * bufInSizeByteMin ... 最低必要となるバッファ数, 端末ごとに異なる (今回は使用していない)
@@ -232,6 +256,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
                 bufInSizeByte);
+
         /**
          * AudioTrack の初期化
          *  電話の耳からの出力
@@ -248,6 +273,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 AudioFormat.ENCODING_PCM_16BIT,
                 bufInSizeByte * 2,
                 AudioTrack.MODE_STREAM);
+        audioTrackMusic = new AudioTrack(
+                AudioManager.STREAM_VOICE_CALL,
+                SAMPLING_RATE,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufInSizeByte * 2,
+                AudioTrack.MODE_STREAM
+        );
+
+        AssetManager assetManager = getAssets();
+        AssetFileDescriptor assetFileDescriptor = null;
+        try {
+            assetFileDescriptor = assetManager.openFd("PCM-D50_441kHz16bit.wav");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        assert assetFileDescriptor != null;
+        mByteArray = new byte[(int)assetFileDescriptor.getLength()];
+        Log.v("Audio", String.valueOf(mByteArray.length));
 
         findViewById(R.id.button_start).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -256,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     playState = 1;  /** state -> normal  */
                     audioTrack.play();
                     recordingAndPlay();
+                    musicPlay();
                 } else if (playState == 2) {  /** state : slow */
                     bIsRecording = false;
                     audioTrack.stop();
