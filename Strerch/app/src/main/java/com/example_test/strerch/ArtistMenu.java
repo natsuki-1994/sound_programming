@@ -144,7 +144,7 @@ public class ArtistMenu extends Fragment{
 //         * trackList がクリックされたら曲の再生
 //         */
 //        trackList.setOnItemClickListener(activity.TrackClickListener);
-//        trackList.setOnItemLongClickListener(activity.TrackLongClickListener);
+        trackList.setOnItemLongClickListener(activity.TrackLongClickListener);
 
         return partView;
     }
