@@ -1,6 +1,10 @@
 package com.example_test.strerch;
 
 import android.Manifest;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -12,6 +16,7 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -32,6 +37,9 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     private static Album focusedAlbum;
     private static Artist focusedArtist;
+
+    public static TestPlayerService TestPlayerBoundService;
+    public static boolean IsTestPlayerServiceBound;
 
     AudioRecord audioRec = null;
     AudioTrack audioTrack;
@@ -128,6 +136,47 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
                 }
             }).start();
         }
+    }
+
+    private ServiceConnection TestPlayerServiceConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            Toast.makeText(MainActivity.this, "Activity: onServiceConnected", Toast.LENGTH_SHORT).show();
+            TestPlayerBoundService = ((TestPlayerService.TestPlayerServiceLocalBinder) service).getService();
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            TestPlayerBoundService = null;
+            Toast.makeText(MainActivity.this, "Activity: onServiceDisconnected", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    public void doBindService() {
+        bindService(new Intent(MainActivity.this, TestPlayerService.class), TestPlayerServiceConnection, Context.BIND_AUTO_CREATE);
+        IsTestPlayerServiceBound = true;
+    }
+
+    public void doUnbindService() {
+        if(IsTestPlayerServiceBound){
+            unbindService(TestPlayerServiceConnection);
+            IsTestPlayerServiceBound = false;
+        }
+    }
+
+    public void CallService(TestPlayerService.ACTION action) {
+        Intent intent = new Intent(this, TestPlayerService.class);
+        intent.setAction(action.getCmd());
+        switch(action) {
+            case TEST0:
+                intent.putExtra("TEST_MSG", "The quick brown fox jumps over the lazy dog");
+                break;
+            case TEST1:
+                intent.putExtra("TEST_ID", 339);
+                break;
+            default:
+                break;
+        }
+
+        startService(intent);
     }
 
     /**
