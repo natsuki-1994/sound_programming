@@ -27,7 +27,7 @@ class Track {
     /**
      * getItems の cursor で使用したい column 名を COLUMNS に格納しておく
      */
-    private static final String[] COLUMNS = {
+    static final String[] COLUMNS = {
             MediaStore.Audio.Media._ID,
             MediaStore.Audio.Media.DATA,
             MediaStore.Audio.Media.TITLE,
@@ -42,7 +42,7 @@ class Track {
     /**
      *  Track クラスのコンストラクタ
      */
-    private Track(Cursor cursor) {
+    Track(Cursor cursor) {
         id = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media._ID));
         // path = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
         title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));

@@ -28,7 +28,7 @@ import java.util.List;
 public class MainActivity extends FragmentActivity implements SensorEventListener {
 
     enum FrgmType {fRoot, fAlbum, fArtist}  /** Fragment のタイプ */
-    private FrgmType fTop;  /** 現在表示している Fragment を格納 */
+    // private FrgmType fTop;  /** 現在表示している Fragment を格納 */
 
     private static Album focusedAlbum;
     private static Artist focusedArtist;
@@ -333,7 +333,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-//        getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
@@ -343,11 +343,11 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
     public void setNewFragment(FrgmType CallFragment) {
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
-        fTop = CallFragment;
+        // fTop = CallFragment;
         switch (CallFragment) {
             case fRoot : ft.replace(R.id.root, new RootMenu(), "Root"); break;
             case fAlbum : ft.replace(R.id.root, new AlbumMenu(), "album"); break;
-            case fArtist : ft.replace(R.id.root, new AlbumMenu(), "artist"); break;
+            case fArtist : ft.replace(R.id.root, new ArtistMenu(), "artist"); break;
         }
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.addToBackStack(null);
@@ -371,7 +371,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
      * アルバム一覧をクリックしたときの動作
      * クリックした AdapterView の親要素が ListView
      * focusAlbum を実行し、AlbumMenu Fragment に変更
-     * focusedAlbum は AlbumMenu 内で使用
+     * focusedAlbum は RootMenu 内で使用
      */
     public AdapterView.OnItemClickListener AlbumClickListener = new AdapterView.OnItemClickListener() {
         @Override
@@ -399,7 +399,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
      * アーティスト一覧をクリックしたときの動作
      * クリックした AdapterView の親要素が ListView
      * focusArtist を実行し、ArtistMenu Fragment に変更
-     * focusedArtist は ArtistMenu 内で使用
+     * focusedArtist は RootMenu 内で使用
      */
     public AdapterView.OnItemClickListener ArtistClickListener = new AdapterView.OnItemClickListener() {
         @Override

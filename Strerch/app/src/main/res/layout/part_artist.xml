@@ -7,7 +7,7 @@
     android:paddingRight="2dp" >
 
     <LinearLayout
-        android:id="@+id/album_info"
+        android:id="@+id/artist_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -23,13 +23,13 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="5dp" >
 
             <TextView
                 android:id="@+id/title"
-                android:text="@string/albumtitle"
+                android:text="@string/artist_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingBottom="3dp"
@@ -43,8 +43,8 @@
                 android:background="#333" />
 
             <TextView
-                android:id="@+id/artist"
-                android:text="@string/artist"
+                android:id="@+id/albums"
+                android:text="@string/albums"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
@@ -57,8 +57,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
+                android:paddingBottom="3dp"
                 android:text="@string/tracks"
                 android:textColor="#333" />
+
+            <Spinner
+                android:id="@id/album_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:spinnerMode="dropdown" >
+
+            </Spinner>
 
         </LinearLayout>
 

@@ -162,7 +162,7 @@ public class RootMenu extends Fragment {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-            MainActivity activity = (MainActivity) getActivity();
+            final MainActivity activity = (MainActivity) getActivity();
             List<Artist> artists = Artist.getItems(activity);
 
             /**
@@ -172,6 +172,13 @@ public class RootMenu extends Fragment {
             ListView artistList = (ListView) v.findViewById(R.id.list);
             ListArtistAdapter adapter = new ListArtistAdapter(activity, artists);
             artistList.setAdapter(adapter);
+
+            /**
+             * artist をクリックしたときに RootMenu の Fragment から ArtistMenu の Fragment に変更
+             * メソッドは MainActivity で定義
+             */
+            artistList.setOnItemClickListener(activity.ArtistClickListener);
+            artistList.setOnItemLongClickListener(activity.ArtistLongClickListener);
 
             return v;
         }

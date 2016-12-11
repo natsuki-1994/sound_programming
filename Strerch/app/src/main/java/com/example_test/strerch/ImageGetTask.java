@@ -1,5 +1,6 @@
 package com.example_test.strerch;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -21,6 +22,14 @@ class ImageGetTask extends AsyncTask<String, Void, Bitmap> {
         super();
         image = _image;
         tag = image.getTag().toString();
+    }
+
+    /**
+     * アルバムタイトルからコンテントプロバイダ経由でアルバムアートを取得する
+     */
+    static String searchArtPath(Context context, String album) {
+
+        return "hoge";
     }
 
     /**

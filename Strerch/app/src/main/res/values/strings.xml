@@ -8,15 +8,19 @@
     <string name="duration">0:00</string>
     <string name="image">image</string>
     <string name="album_title">Album Title</string>
+    <string name="artist_title">Artist Title</string>
     <string name="tracks">tracks</string>
+    <string name="albums">albums</string>
 
     <string name="title_section1">Home</string>
     <string name="title_section2">Track</string>
     <string name="title_section3">Album</string>
     <string name="title_section4">Artist</string>
-    <string name="home_screen">HOME screen</string>
+    <string name="home_screen">SAMPLE</string>
     <string name="back">BACK</string>
     <string name="st_sk">St/Sk</string>
     <string name="skip">SKIP</string>
     <string name="albumtitle">AlbumTitle</string>
+    <string name="spinner">spinner</string>
+    <string name="Tracks">Tracks</string>
 </resources>
