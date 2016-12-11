@@ -1,8 +1,10 @@
 package com.example_test.strerch;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.provider.MediaStore;
 
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ class Track {
     public String title;
     // private String album;
     public String artist;
-    // private Uri uri;
+    Uri uri;
     long duration;
     // private int trackNo;
 
@@ -52,7 +54,7 @@ class Track {
         // artistId = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST_ID));
         duration = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
         // trackNo = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.Media.TRACK));
-        // uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+        uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
     }
 
     /**

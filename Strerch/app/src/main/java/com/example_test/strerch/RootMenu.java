@@ -125,6 +125,12 @@ public class RootMenu extends Fragment {
             ListTrackAdapter adapter = new ListTrackAdapter(activity, tracks);
             trackList.setAdapter(adapter);
 
+            /**
+             * album をクリックしたときに RootMenu の Fragment から AlbumMenu の Fragment に変更
+             * メソッドは MainActivity で定義
+             */
+            trackList.setOnItemLongClickListener(activity.TrackLongClickListener);
+
             return v;
         }
 

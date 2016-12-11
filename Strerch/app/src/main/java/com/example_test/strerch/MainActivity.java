@@ -37,6 +37,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     private static Album focusedAlbum;
     private static Artist focusedArtist;
+    private static Track focusedTrack;
 
     public static TestPlayerService TestPlayerBoundService;
     public static boolean IsTestPlayerServiceBound;
@@ -415,6 +416,8 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
     public Album getFocusedAlbum() { return focusedAlbum; }
     public void focusArtist(Artist item) { if (item != null) focusedArtist = item; }
     public Artist getFocusedArtist() { return focusedArtist; }
+    public void focusTrack(Track item) { if (item != null) focusedTrack = item; }
+    public Track getFocusedTrack() { return  focusedTrack; }
 
     /**
      * アルバム一覧をクリックしたときの動作
@@ -468,6 +471,19 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
             ListView lv = (ListView) parent;
             Artist item = (Artist) lv.getItemAtPosition(position);
             Toast.makeText(MainActivity.this, "LongClick: " + item.artist, Toast.LENGTH_LONG).show();
+            return true;
+        }
+    };
+
+    /**
+     * トラック一覧をクリックしたときの動作確認のための LongClick 動作
+     */
+    public  AdapterView.OnItemLongClickListener TrackLongClickListener = new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            ListView lv = (ListView) parent;
+            Track item = (Track) lv.getItemAtPosition(position);
+            Toast.makeText(MainActivity.this, "LongClick: " + item.uri, Toast.LENGTH_LONG).show();
             return true;
         }
     };
