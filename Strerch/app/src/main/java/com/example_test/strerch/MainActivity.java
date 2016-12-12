@@ -543,8 +543,7 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
             ListView lv = (ListView) parent;
             Track item = (Track) lv.getItemAtPosition(position);
             Toast.makeText(MainActivity.this, "LongClick: " + item.uri, Toast.LENGTH_LONG).show();
-            mediaPlayer = MediaPlayer.create(MainActivity.this, R.raw.pcm);
-            mediaPlayer.setLooping(true);
+            mediaPlayer = MediaPlayer.create(MainActivity.this, item.uri);
             mediaPlayer.start();
             audioTrack.play();
             recordingAndPlay();
