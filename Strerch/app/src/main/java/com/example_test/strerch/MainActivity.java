@@ -14,6 +14,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -92,6 +93,7 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
     AudioRecord audioRec = null;
     AudioTrack audioTrack;
     boolean bIsRecording = false;
+    MediaPlayer mediaPlayer;
 
     int bufInSizeByteMin;
     int bufInSizeByte;
@@ -99,7 +101,7 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
 
     int SAMPLING_RATE = 44100;
 
-    int playState = 0;  /** stop : 0 , play : 1, slow : 2 */
+    int playState = 1;  /** stop : 0 , play : 1, slow : 2 */
 
     private void requestPermission() {
         /** API のバージョンをチェック, API version < 23 なら何もしない */
@@ -166,9 +168,9 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
                             }
                         }
 
-//                        if (bIsRecording == false) {
-//
-//                        }
+                        if (!bIsRecording) {
+                            break;
+                        }
                         /**
                          * bufOutFifo から bufOut.length 分だけ audioTrack のリングバッファに入力
                          */
@@ -186,6 +188,9 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
         }
     }
 
+    /**
+     * 以下、サービス部分
+     */
     private ServiceConnection TestPlayerServiceConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             Toast.makeText(MainActivity.this, "Activity: onServiceConnected", Toast.LENGTH_SHORT).show();
@@ -378,6 +383,10 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
                 bufInSizeByte * 2,
                 AudioTrack.MODE_STREAM);
 
+        /**
+         * MediaPlayer の初期化
+         */
+
 //        findViewById(R.id.button_start).setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {
@@ -534,6 +543,11 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
             ListView lv = (ListView) parent;
             Track item = (Track) lv.getItemAtPosition(position);
             Toast.makeText(MainActivity.this, "LongClick: " + item.uri, Toast.LENGTH_LONG).show();
+            mediaPlayer = MediaPlayer.create(MainActivity.this, R.raw.pcm);
+            mediaPlayer.setLooping(true);
+            mediaPlayer.start();
+            audioTrack.play();
+            recordingAndPlay();
             return true;
         }
     };
