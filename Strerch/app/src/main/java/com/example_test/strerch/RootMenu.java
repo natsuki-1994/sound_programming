@@ -190,4 +190,8 @@ public class RootMenu extends Fragment {
         }
     }
 
+    public void moveTo(int position) {
+        mViewPager.setCurrentItem(position, true);
+    }
+
 }

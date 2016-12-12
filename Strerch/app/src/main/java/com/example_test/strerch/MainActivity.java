@@ -17,9 +17,13 @@ import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -30,7 +34,50 @@ import android.widget.Toast;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MainActivity extends FragmentActivity implements SensorEventListener {
+public class MainActivity extends FragmentActivity implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, SensorEventListener {
+
+    /**
+     * ナビゲーションを選択したときの Fragment 遷移
+     */
+    @Override
+    public boolean onNavigationItemSelected(@NonNull android.view.MenuItem item) {
+        int id = item.getItemId();
+
+        FragmentManager fm = getSupportFragmentManager();
+        fm.beginTransaction();
+        RootMenu fg = (RootMenu) fm.findFragmentByTag("Root");
+
+        switch(id) {
+            case R.id.nav_home:
+                fm.popBackStack("BASE", 0);
+                fg.moveTo(0);
+                break;
+            case R.id.nav_tracks:
+                fm.popBackStack("BASE", 0);
+                fg.moveTo(1);
+                break;
+            case R.id.nav_albums:
+                fm.popBackStack("BASE", 0);
+                fg.moveTo(2);
+                break;
+            case R.id.nav_artists:
+                fm.popBackStack("BASE", 0);
+                fg.moveTo(3);
+                break;
+            case R.id.nav_search:
+                break;
+            case R.id.nav_tools:
+                break;
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+    @Override
+    public void onClick(View view) {
+
+    }
 
     enum FrgmType {fRoot, fAlbum, fArtist}  /** Fragment のタイプ */
     // private FrgmType fTop;  /** 現在表示している Fragment を格納 */
@@ -54,7 +101,7 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
 
     int playState = 0;  /** stop : 0 , play : 1, slow : 2 */
 
-    private void requestPermission(){
+    private void requestPermission() {
         /** API のバージョンをチェック, API version < 23 なら何もしない */
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
@@ -268,6 +315,9 @@ public class MainActivity extends FragmentActivity implements SensorEventListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);  /** layout を設定 */
         requestPermission();  /** API23 以上で Permission 取得を Activity で行う */
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
 
         /**
          * Fragment の初期化
