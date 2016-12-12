@@ -1,32 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:orientation="horizontal">-->
+    <!---->
+    <!--<LinearLayout-->
+        <!--android:id="@+id/sample"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="horizontal"-->
+        <!--android:layout_gravity="center_vertical" >-->
+
+        <!--<Space-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_weight="1"/>-->
+
+       <!--<TextView-->
+           <!--android:layout_width="wrap_content"-->
+           <!--android:layout_height="match_parent"-->
+           <!--android:text="@string/home_screen"-->
+           <!--android:textSize="25sp" />-->
+
+        <!--<Space-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_weight="1" />-->
+
+    <!--</LinearLayout>-->
+
+<!--</LinearLayout>-->
+
+<!--<?xml version="1.0" encoding="utf-8"?>-->
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal">
+    android:fitsSystemWindows="true"
+    tools:context="com.example_test.strerch.MainActivity">
 
-    <LinearLayout
-        android:id="@+id/sample"
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/app_bar"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="100dp"
+                android:layout_marginBottom="15dp"
+                android:text="@string/sample_player"
+                android:textColor="#fff"
+                android:textSize="25sp"
+                android:gravity="bottom"/>
+
+        </android.support.v7.widget.Toolbar>
+
+    </android.support.design.widget.AppBarLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab"
+        srcCompat="@android:drawable/ic_dialog_email"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="center_vertical" >
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        android:layout_gravity="bottom|end" />
 
-        <Space
-            android:layout_width="wrap_content"
+    <android.support.v4.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="380dp"
+        android:layout_gravity="bottom" >
+
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:padding="15dp"
+            android:textSize="15sp"
+            android:layout_gravity="center_horizontal"
+            android:text="@string/this_is_sample_application"/>
 
-       <TextView
-           android:layout_width="wrap_content"
-           android:layout_height="match_parent"
-           android:text="@string/home_screen"
-           android:textSize="25sp" />
+    </android.support.v4.widget.NestedScrollView>
 
-        <Space
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-
-    </LinearLayout>
-
-</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>

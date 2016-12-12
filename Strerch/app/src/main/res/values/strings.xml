@@ -12,6 +12,16 @@
     <string name="tracks">tracks</string>
     <string name="albums">albums</string>
 
+    <string name="nav_libraries">ライブラリ</string>
+    <string name="tracks_jpn">トラック</string>
+    <string name="albums_jpn">アルバム</string>
+    <string name="artists_jpn">アーティスト</string>
+    <string name="playlists_jpn">プレイリスト</string>
+    <string name="nav_application">アプリ</string>
+    <string name="search">検索</string>
+    <string name="tools">ツール</string>
+    <string name="settings">設定</string>
+
     <string name="title_section1">Home</string>
     <string name="title_section2">Track</string>
     <string name="title_section3">Album</string>
@@ -23,4 +33,9 @@
     <string name="albumtitle">AlbumTitle</string>
     <string name="spinner">spinner</string>
     <string name="Tracks">Tracks</string>
+    <string name="sample_player">Sample Player</string>
+    <string name="this_is_sample_application">This is Sample Application</string>
+    <string name="music_stretch_player">Music Stretch Player</string>
+    <string name="natsuki">natsuki</string>
+    <string name="home">ホーム</string>
 </resources>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="@string/nav_libraries">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/nav_home"
+                    android:icon="@drawable/ic_menu_send"
+                    android:title="@string/home" />
+                <item
+                    android:id="@+id/nav_tracks"
+                    android:icon="@drawable/ic_menu_camera"
+                    android:title="@string/tracks_jpn" />
+                <item
+                    android:id="@+id/nav_albums"
+                    android:icon="@drawable/ic_menu_gallery"
+                    android:title="@string/albums_jpn" />
+                <item
+                    android:id="@+id/nav_artists"
+                    android:icon="@drawable/ic_menu_slideshow"
+                    android:title="@string/albums_jpn" />
+                <item
+                    android:id="@+id/nav_playlists"
+                    android:icon="@drawable/ic_menu_manage"
+                    android:title="@string/playlists_jpn" />
+            </group>
+        </menu>
+    </item>
+
+    <item android:title="@string/nav_libraries">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/nav_search"
+                    android:icon="@drawable/ic_menu_share"
+                    android:title="@string/search" />
+                <item
+                    android:id="@+id/nav_tools"
+                    android:icon="@drawable/ic_menu_share"
+                    android:title="@string/tools" />
+            </group>
+        </menu>
+    </item>
+
+</menu>
