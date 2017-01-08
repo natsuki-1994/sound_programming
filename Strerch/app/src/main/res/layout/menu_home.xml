@@ -19,7 +19,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="5dp">
 
             <ImageView
                 android:id="@+id/imageViewHome"
@@ -47,20 +48,31 @@
 
             <android.support.v7.widget.LinearLayoutCompat
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-                <com.beardedhen.androidbootstrap.BootstrapButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="hoge"
-                    app:bootstrapBrand="secondary"
-                    app:bootstrapSize="lg"
-                    app:buttonMode="regular"
-                    app:showOutline="false"
-                    app:roundedCorners="true"
-                    android:layout_margin="10dp"
-                    app:bootstrapText="Button  {fa_heart} {fa_android}"
-                    />
+                <Button
+                    android:text="back"
+                    android:id="@+id/c_btn_back"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/circle_button"/>
+
+                <Button
+                    android:text="play"
+                    android:id="@+id/c_btn"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    android:background="@drawable/circle_button"/>
+
+                <Button
+                    android:text="next"
+                    android:id="@+id/c_btn_next"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/circle_button"/>
 
             </android.support.v7.widget.LinearLayoutCompat>
 
@@ -70,7 +82,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingTop="50dp" >
+                android:gravity="center"
+                android:paddingTop="20dp" >
 
                 <LinearLayout
                     android:layout_width="wrap_content"

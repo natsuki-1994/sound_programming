@@ -1,10 +1,5 @@
 package com.example_test.strerch;
 
-import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -16,12 +11,8 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -53,6 +44,7 @@ public class RootMenu extends Fragment {
         mSectionsPagerAdapter = new SectionsPagerAdapter(getChildFragmentManager());
         mViewPager = (ViewPager) rootView.findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setOffscreenPageLimit(3);
 
         /**
         /* PagerTab のカスタマイズ
@@ -72,6 +64,11 @@ public class RootMenu extends Fragment {
 
         SectionsPagerAdapter(FragmentManager fm) { super(fm); }
 
+//        Fragment fragmentHome = new HomeSectionFragment();
+//        Fragment fragmentTrack = new TrackSectionFragment();
+//        Fragment fragmentAlbum = new AlbumSectionFragment();
+//        Fragment fragmentArtist = new ArtistSectionFragment();
+
         /**
          * ページをスワイプするごとに R.id.pager に表示する Fragment を変更
          */
@@ -83,6 +80,10 @@ public class RootMenu extends Fragment {
                 case 1: fragment = new TrackSectionFragment(); break;
                 case 2: fragment = new AlbumSectionFragment(); break;
                 case 3: fragment = new ArtistSectionFragment(); break;
+//                case 0: fragment = fragmentHome; break;
+//                case 1: fragment = fragmentTrack; break;
+//                case 2: fragment = fragmentAlbum; break;
+//                case 3: fragment = fragmentArtist; break;
             }
             return fragment;
         }
@@ -121,31 +122,34 @@ public class RootMenu extends Fragment {
             View v = inflater.inflate(R.layout.menu_home, container, false);
             SwitchCompat toggleOutside = (SwitchCompat) v.findViewById(R.id.toggleOutside);
 //            SwitchCompat toggleSlow = (SwitchCompat) v.findViewById(R.id.toggleSlow);
-            ImageView view_view = (ImageView) v.findViewById(R.id.imageViewHome);
-            TextView track_root = (TextView) v.findViewById(R.id.textView_track);
-            TextView artist_root = (TextView) v.findViewById(R.id.textView_artist);
-
+//            ImageView view_view = (ImageView) v.findViewById(R.id.imageViewHome);
+//            TextView track_root = (TextView) v.findViewById(R.id.textView_track);
+//            TextView artist_root = (TextView) v.findViewById(R.id.textView_artist);
+            /**
+             * toggleButton（toggleOutside）をクリックしたときの動作
+             * メソッドは MainActivity で定義
+             */
             toggleOutside.setOnCheckedChangeListener(activity.toggleOutsideClickListener);
 
-            if (activity.focusedTrack == null) {
-                view_view.setImageResource(R.mipmap.ic_launcher);
-            } else {
-                Bitmap album_art_ = null;
-                long albumId = activity.focusedTrack.albumId;
-                Uri albumArtUri = Uri.parse(
-                        "content://media/external/audio/albumart");
-                Uri albumUri = ContentUris.withAppendedId(albumArtUri, albumId);
-                ContentResolver cr = activity.getContentResolver();
-                try {
-                    InputStream is = cr.openInputStream(albumUri);
-                    album_art_ = BitmapFactory.decodeStream(is);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-                view_view.setImageBitmap(album_art_);
-                track_root.setText(activity.focusedTrack.title);
-                artist_root.setText(activity.focusedTrack.artist);
-            }
+//            if (activity.focusedTrack == null) {
+//                view_view.setImageResource(R.mipmap.ic_launcher);
+//            } else {
+//                Bitmap album_art_ = null;
+//                long albumId = activity.focusedTrack.albumId;
+//                Uri albumArtUri = Uri.parse(
+//                        "content://media/external/audio/albumart");
+//                Uri albumUri = ContentUris.withAppendedId(albumArtUri, albumId);
+//                ContentResolver cr = activity.getContentResolver();
+//                try {
+//                    InputStream is = cr.openInputStream(albumUri);
+//                    album_art_ = BitmapFactory.decodeStream(is);
+//                } catch (FileNotFoundException e) {
+//                    e.printStackTrace();
+//                }
+//                view_view.setImageBitmap(album_art_);
+//                track_root.setText(activity.focusedTrack.title);
+//                artist_root.setText(activity.focusedTrack.artist);
+//            }
 
             return v;
         }
