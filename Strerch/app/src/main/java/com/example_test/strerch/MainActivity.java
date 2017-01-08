@@ -25,6 +25,7 @@ import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.jtransforms.fft.DoubleFFT_1D;
@@ -420,7 +421,7 @@ public class MainActivity extends FragmentActivity {
             Track item = (Track) lv.getItemAtPosition(position);
             focusTrack(item);
 
-            changeAlbumArt();
+            changeInformation();
 
             Toast.makeText(MainActivity.this, "LongClick: " + item.album, Toast.LENGTH_LONG).show();
             mediaPlayer = MediaPlayer.create(MainActivity.this, item.uri);
@@ -429,7 +430,7 @@ public class MainActivity extends FragmentActivity {
         }
     };
 
-    public void changeAlbumArt() {
+    public void changeInformation() {
         Bitmap album_art_ = null;
         long albumId = focusedTrack.albumId;
         Uri albumArtUri = Uri.parse(
@@ -445,6 +446,10 @@ public class MainActivity extends FragmentActivity {
 
         ImageView album_art_root = (ImageView) findViewById(R.id.imageViewHome);
         album_art_root.setImageBitmap(album_art_);
+        TextView track_root = (TextView) findViewById(R.id.textView_track);
+        track_root.setText(focusedTrack.title);
+        TextView artist_root = (TextView) findViewById(R.id.textView_artist);
+        artist_root.setText(focusedTrack.artist);
     }
 
     /**
