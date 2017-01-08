@@ -1,17 +1,27 @@
 package com.example_test.strerch;
 
+import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.ViewPager;
+import android.support.v7.widget.SwitchCompat;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -64,8 +74,6 @@ public class RootMenu extends Fragment {
 
         /**
          * ページをスワイプするごとに R.id.pager に表示する Fragment を変更
-         * @param position
-         * @return fragment
          */
         @Override
         public Fragment getItem(int position) {
@@ -84,8 +92,6 @@ public class RootMenu extends Fragment {
 
         /**
          * ページをスワイプするごとに R.id.pager_title_strip に表示する ページ名 を変更
-         * @param position
-         * @return
          */
         @Override
         public CharSequence getPageTitle(int position) {
@@ -104,8 +110,46 @@ public class RootMenu extends Fragment {
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.menu_home, container, false);
+            super.onCreate(savedInstanceState);
+
+            MainActivity activity = (MainActivity) getActivity();
+
+            /**
+             * menu_home を捕まえて膨らませる (inflate する)
+             * button クリックしたときの動作を指定（メソッドは MainActivity で指定）
+             */
+            View v = inflater.inflate(R.layout.menu_home, container, false);
+            SwitchCompat toggleOutside = (SwitchCompat) v.findViewById(R.id.toggleOutside);
+//            SwitchCompat toggleSlow = (SwitchCompat) v.findViewById(R.id.toggleSlow);
+            ImageView view_view = (ImageView) v.findViewById(R.id.imageViewHome);
+            TextView track_root = (TextView) v.findViewById(R.id.textView_track);
+            TextView artist_root = (TextView) v.findViewById(R.id.textView_artist);
+
+            toggleOutside.setOnCheckedChangeListener(activity.toggleOutsideClickListener);
+
+            if (activity.focusedTrack == null) {
+                view_view.setImageResource(R.mipmap.ic_launcher);
+            } else {
+                Bitmap album_art_ = null;
+                long albumId = activity.focusedTrack.albumId;
+                Uri albumArtUri = Uri.parse(
+                        "content://media/external/audio/albumart");
+                Uri albumUri = ContentUris.withAppendedId(albumArtUri, albumId);
+                ContentResolver cr = activity.getContentResolver();
+                try {
+                    InputStream is = cr.openInputStream(albumUri);
+                    album_art_ = BitmapFactory.decodeStream(is);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                view_view.setImageBitmap(album_art_);
+                track_root.setText(activity.focusedTrack.title);
+                artist_root.setText(activity.focusedTrack.artist);
+            }
+
+            return v;
         }
+
     }
 
     public static class TrackSectionFragment extends Fragment {
@@ -189,9 +233,4 @@ public class RootMenu extends Fragment {
             return v;
         }
     }
-
-    public void moveTo(int position) {
-        mViewPager.setCurrentItem(position, true);
-    }
-
 }

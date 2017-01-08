@@ -16,11 +16,11 @@ class Track {
      * albumId, artistId, path, album, uri, trackNo は今のところ使用せず
      */
     public long id;
-    // private long albumId;
+    long albumId;
     // private long artistId;
     // private String path;
     public String title;
-    // private String album;
+    String album;
     public String artist;
     Uri uri;
     long duration;
@@ -50,7 +50,7 @@ class Track {
         title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
         // album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
         artist = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-        // albumId = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
+        albumId = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
         // artistId = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST_ID));
         duration = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
         // trackNo = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.Media.TRACK));

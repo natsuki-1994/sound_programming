@@ -1,6 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+    }
     compileSdkVersion 25
     buildToolsVersion "25.0.0"
     defaultConfig {
@@ -29,4 +31,5 @@ dependencies {
     compile files('../libraries/JTransforms-3.1-with-dependencies.jar')
     compile 'com.android.support:design:25.0.0'
     compile 'com.android.support:support-v4:25.0.0'
+    compile 'com.beardedhen:androidbootstrap:2.0.0'
 }

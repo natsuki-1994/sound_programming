@@ -1,110 +1,73 @@
 package com.example_test.strerch;
 
 import android.Manifest;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.support.annotation.NonNull;
-import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
+import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.util.LinkedList;
-import java.util.List;
+import org.jtransforms.fft.DoubleFFT_1D;
 
-public class MainActivity extends FragmentActivity implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener, SensorEventListener {
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.LinkedList;
+
+import static com.example_test.strerch.R.id;
+import static com.example_test.strerch.R.layout;
+
+public class MainActivity extends FragmentActivity {
 
     /**
-     * ナビゲーションを選択したときの Fragment 遷移
+     * Fragment のタイプ
      */
-    @Override
-    public boolean onNavigationItemSelected(@NonNull android.view.MenuItem item) {
-        int id = item.getItemId();
+    enum FrgmType {fRoot, fAlbum, fArtist}
 
-        FragmentManager fm = getSupportFragmentManager();
-        fm.beginTransaction();
-        RootMenu fg = (RootMenu) fm.findFragmentByTag("Root");
-
-        switch(id) {
-            case R.id.nav_home:
-                fm.popBackStack("BASE", 0);
-                fg.moveTo(0);
-                break;
-            case R.id.nav_tracks:
-                fm.popBackStack("BASE", 0);
-                fg.moveTo(1);
-                break;
-            case R.id.nav_albums:
-                fm.popBackStack("BASE", 0);
-                fg.moveTo(2);
-                break;
-            case R.id.nav_artists:
-                fm.popBackStack("BASE", 0);
-                fg.moveTo(3);
-                break;
-            case R.id.nav_search:
-                break;
-            case R.id.nav_tools:
-                break;
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
-    }
-    @Override
-    public void onClick(View view) {
-
-    }
-
-    enum FrgmType {fRoot, fAlbum, fArtist}  /** Fragment のタイプ */
-    // private FrgmType fTop;  /** 現在表示している Fragment を格納 */
-
+    /**
+     * Focus されている Album, Artist, Track
+     */
     private static Album focusedAlbum;
     private static Artist focusedArtist;
-    private static Track focusedTrack;
+    public Track focusedTrack;
 
-    public static TestPlayerService TestPlayerBoundService;
-    public static boolean IsTestPlayerServiceBound;
-
+    /**
+     * Audio 関連の変数
+     */
     AudioRecord audioRec = null;
     AudioTrack audioTrack;
     boolean bIsRecording = false;
     MediaPlayer mediaPlayer;
-
     int bufInSizeByteMin;
     int bufInSizeByte;
     int bufInSizeShort;
-
     int SAMPLING_RATE = 44100;
+    int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
+    int fftSize = 4096;
 
-    int playState = 1;  /** stop : 0 , play : 1, slow : 2 */
-
+    /**
+     * API のバージョンをチェック, API version < 23 なら何もしない
+     */
     private void requestPermission() {
-        /** API のバージョンをチェック, API version < 23 なら何もしない */
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 1);
         }
@@ -116,6 +79,9 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
         }
     }
 
+    /**
+     * 音楽再生 / 外部音再生
+     */
     private void recordingAndPlay() {
         if (bIsRecording) {
             bIsRecording = false;
@@ -127,18 +93,17 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-
                     /**
                      * bufIn と bufOut との時間軸が等しい必要があるみたい？
                      * 具体的には 1s 分のデータを加工して 2s になる場合でも、AudioTrack からの出力は 1s ごとなのでこのままでは リングバッファでうまく処理できない
                      * よってbufIn と bufOut との間に FIFO を挟んで、その差を吸収する。
-                     * bufIn       ... 読み取り用バッファ (mono)
-                     * bufOut      ... 書き込み用バッファ (stereo・bufIn の 2倍)
-                     * bufOutFifo  ... 書き込み待ち用FIFO
-                     * bufTemp     ... 前回読み取った中で書き込み待ち用バッファに書き込んでいないものと今回読み取ったもの
-                     * bufTempTemp
+                     * bufIn          ... 読み取り用バッファ (mono)
+                     * bufInStretched ... 2倍に伸ばした音声（周波数は 1/2 となる）
+                     * bufOut         ... 書き込み用バッファ (stereo なので bufIn の 2倍)
+                     * bufOutFifo     ... 書き込み待ち用FIFO
                      */
                     short bufIn[] = new short[bufInSizeShort];
+                    short bufInStretched[] = new short[bufInSizeShort * 2];
                     short bufOut[] = new short[bufInSizeShort * 2];
                     LinkedList<Short> bufOutFifo = new LinkedList<>();
 
@@ -148,7 +113,7 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
                          */
                         audioRec.read(bufIn, 0, bufInSizeShort);
 
-                        if (playState == 1) {  /** state : normal */
+                        if (playState == 1) {  /** state : play */
                             /**
                              * stereo に変更する
                              */
@@ -156,15 +121,109 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
                                 bufOutFifo.offer(bufIn[i]);
                                 bufOutFifo.offer(bufIn[i]);
                             }
+
+//                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);
+//                            double fftData[] = new double[fftSize];
+//                            double ifftData[] = new double[fftSize];
+//
+//                            /**
+//                             * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
+//                             */
+//                            for (int j = 0; j < fftSize; j++) {
+//                                fftData[j] = (bufIn[j] * 1.0) / Short.MAX_VALUE;
+//                            }
+//
+//                            /**
+//                             * FFT 実行
+//                             * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
+//                             */
+//                            fft.realForward(fftData);
+//
+////                            for (int j = 0; j < fftSize; j++) {
+////                               ifftData[j] = fftData[j];
+////                            }
+//
+//                            /**
+//                             * 周波数シフトを行う
+//                             */
+//                            for (int j = 0; j < fftSize / 2; j += 2) {
+//                                ifftData[2 * j] = fftData[j];
+//                                ifftData[2 * j + 1] = fftData[j + 1];
+//                                if (j > 0) {
+//                                    ifftData[2 * j + 2] = (fftData[j] + fftData[j - 2]) / 2;
+//                                } else {
+//                                    ifftData[2 * j + 2] = fftData[j];
+//                                }
+//                                ifftData[2 * j + 3] = 0;
+//                            }
+//
+//                            /**
+//                             * IFFT 実行
+//                             */
+//                            fft.realInverse(ifftData, true);
+//
+//                            /**
+//                             * stereo に変更して bufOutFifo にプッシュ
+//                             */
+//                            for (int j = 0; j < fftSize; j++) {
+//                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+//                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+//                            }
                         } else if (playState == 2) {  /** state : slow */
                             /**
-                             * stereo に変更かつ 1/2 倍速 にする
+                             * 1/2 倍速 にする
                              */
                             for (int i = 0; i < bufInSizeShort; i++) {
-                                bufOutFifo.offer(bufIn[i]);
-                                bufOutFifo.offer(bufIn[i]);
-                                bufOutFifo.offer(bufIn[i]);
-                                bufOutFifo.offer(bufIn[i]);
+                                bufInStretched[2 * i] = bufIn[i];
+                                bufInStretched[2 * i + 1] = bufIn[i];
+                            }
+
+                            /**
+                             * fft 処理
+                             *   fft      ... FFT インスタンスの生成
+                             *   fftData  ... FFT をかけるデータ（double 型）
+                             *   ifftData ... IFFT をかけるデータ（double 型）
+                             */
+                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);  /** fftSize = 4096 / bufInStretched = 4096 * 2 */
+                            double fftData[] = new double[fftSize];
+                            double ifftData[] = new double[fftSize];
+
+                            for (int i = 0; i < bufInStretched.length; i += fftSize) {
+                                /**
+                                 * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
+                                 */
+                                for (int j = 0; j < fftSize; j++) {
+                                    fftData[j] = (bufInStretched[j] * 1.0) / Short.MAX_VALUE;
+                                }
+
+                                /**
+                                 * FFT 実行
+                                 * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
+                                 */
+                                fft.realForward(fftData);
+
+                                /**
+                                 * 周波数シフトを行う
+                                 */
+                                 for (int j = 0; j < fftSize / 2; j += 2) {
+                                     ifftData[2 * j] = fftData[j];
+                                     ifftData[2 * j + 1] = fftData[j + 1];
+                                     ifftData[2 * j + 2] = fftData[j] / 10;
+                                     ifftData[2 * j + 3] = 0;
+                                 }
+
+                                /**
+                                 * IFFT 実行
+                                 */
+                                fft.realInverse(ifftData, true);
+
+                                /**
+                                 * stereo に変更して bufOutFifo にプッシュ
+                                 */
+                                for (int j = 0; j < fftSize; j++) {
+                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+                                }
                             }
                         }
 
@@ -188,141 +247,21 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
         }
     }
 
-    /**
-     * 以下、サービス部分
-     */
-    private ServiceConnection TestPlayerServiceConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            Toast.makeText(MainActivity.this, "Activity: onServiceConnected", Toast.LENGTH_SHORT).show();
-            TestPlayerBoundService = ((TestPlayerService.TestPlayerServiceLocalBinder) service).getService();
-        }
-
-        public void onServiceDisconnected(ComponentName className) {
-            TestPlayerBoundService = null;
-            Toast.makeText(MainActivity.this, "Activity: onServiceDisconnected", Toast.LENGTH_SHORT).show();
-        }
-    };
-
-    public void doBindService() {
-        bindService(new Intent(MainActivity.this, TestPlayerService.class), TestPlayerServiceConnection, Context.BIND_AUTO_CREATE);
-        IsTestPlayerServiceBound = true;
-    }
-
-    public void doUnbindService() {
-        if(IsTestPlayerServiceBound){
-            unbindService(TestPlayerServiceConnection);
-            IsTestPlayerServiceBound = false;
-        }
-    }
-
-    public void CallService(TestPlayerService.ACTION action) {
-        Intent intent = new Intent(this, TestPlayerService.class);
-        intent.setAction(action.getCmd());
-        switch(action) {
-            case TEST0:
-                intent.putExtra("TEST_MSG", "The quick brown fox jumps over the lazy dog");
-                break;
-            case TEST1:
-                intent.putExtra("TEST_ID", 339);
-                break;
-            default:
-                break;
-        }
-
-        startService(intent);
-    }
-
-    /**
-     * スマホを初めて連続して3回以上降ったときに recordingAndPlay メソッド実行
-     */
-    private static final int FORCE_THRESHOLD = 550;
-    private static final int TIME_THRESHOLD = 100;
-    private static final int SHAKE_TIMEOUT = 500;
-    private static final int SHAKE_DURATION = 100;
-    private static final int SHAKE_COUNT = 3;
-
-    private SensorManager mSensorManager;
-    public boolean mRegisteredSensor;
-    private float mLastX = -1.0f, mLastY = -1.0f, mLastZ = -1.0f;
-    private long mLastTime;
-    private int mShakeCount = 0;
-    private long mLastShake;
-    private long mLastForce;
-    private int recordingAndPlayFlag = 0;
-
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        /** SensorManager.SENSOR_ACCELEROMETER = 加速度センサーでなければreturn */
-        if (sensorEvent.sensor.getType() != Sensor.TYPE_ACCELEROMETER) return;
-
-        /** 現在時刻を取得 */
-        long now = System.currentTimeMillis();
-
-        /** 最後に動かしてから500ms経過、連続していないのでカウントを0に戻す */
-        if ((now - mLastForce) > SHAKE_TIMEOUT) {
-            mShakeCount = 0;
-        }
-
-        /** 最後に動かしてから100ms経過していたら以下の処理 */
-        if ((now - mLastTime) > TIME_THRESHOLD) {
-            long diff = now - mLastTime;
-            float speed = Math.abs(sensorEvent.values[0] + sensorEvent.values[1] + sensorEvent.values[2] - mLastX - mLastY - mLastZ) / diff * 10000;
-
-            /**
-             * 350より大きい速度で、振られたのが3回目（以上）でかつ、最後にシェイクを検知してから
-             * 100ms以上経過していたら、今の時間を残してシェイク回数を0に戻し、recordingAndPlay メソッドを呼び出す。
-             */
-            if (speed > FORCE_THRESHOLD) {
-                if ((++mShakeCount >= SHAKE_COUNT) && now - mLastShake > SHAKE_DURATION && (recordingAndPlayFlag == 0)) {
-                    mLastShake = now;
-                    mShakeCount = 0;
-                    recordingAndPlayFlag = 1;
-                    audioTrack.play();
-                    recordingAndPlay();
-                    return;
-                }
-                mLastForce = now;
-            }
-            mLastTime = now;
-            mLastX = sensorEvent.values[0];
-            mLastY = sensorEvent.values[1];
-            mLastZ = sensorEvent.values[2];
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-        /** 今回は特に設定しない */
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
-        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
-        if (sensors.size() > 0) {
-            Sensor sensor = sensors.get(0);
-            mRegisteredSensor = mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME);
-            mRegisteredSensor = true;
-        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mSensorManager != null) {
-            mSensorManager.unregisterListener(this);
-            mSensorManager = null;
-        }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);  /** layout を設定 */
+        setContentView(layout.activity_main);  /** layout を設定 */
         requestPermission();  /** API23 以上で Permission 取得を Activity で行う */
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
 
         /**
          * Fragment の初期化
@@ -330,14 +269,8 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
          */
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(R.id.root, new RootMenu(), "Root");  /** Fragment をここで設定 */
+        ft.replace(id.root, new RootMenu(), "Root");  /** Fragment をここで設定 */
         ft.commit();  /** Fragment をコミット */
-
-        /**
-         * Sensor の初期化
-         */
-        mRegisteredSensor = false;
-        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);  /** SensorManager の初期化 */
 
         /**
          * bufInSizeByteMin ... 最低必要となるバッファ数, 端末ごとに異なる (今回は使用していない)
@@ -348,8 +281,8 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
                 SAMPLING_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        bufInSizeByte = 5000;
-        bufInSizeShort = bufInSizeByte / 2;
+        bufInSizeByte = fftSize * 2;
+        bufInSizeShort = fftSize;
 
         /**
          * AudioRecord の初期化
@@ -382,62 +315,6 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
                 AudioFormat.ENCODING_PCM_16BIT,
                 bufInSizeByte * 2,
                 AudioTrack.MODE_STREAM);
-
-        /**
-         * MediaPlayer の初期化
-         */
-
-//        findViewById(R.id.button_start).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (playState == 0) {  /** state : stop */
-//                    playState = 1;  /** state -> normal  */
-//                    audioTrack.play();
-//                    recordingAndPlay();
-//                } else if (playState == 2) {  /** state : slow */
-//                    bIsRecording = false;
-//                    audioTrack.stop();
-//                    playState = 1;  /** state -> normal  */
-//                    audioTrack.play();
-//                    recordingAndPlay();
-//                }  /** state : start ... 何もしない */
-//            }
-//        });
-//
-//        findViewById(R.id.button_stop).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (playState == 1 | playState == 2) {  /** state : normal or state : slow */
-//                    audioTrack.stop();
-//                    bIsRecording = false;
-//                    playState = 0;  /** state -> stop  */
-//                }  /** state : stop ... 何もしない */
-//            }
-//        });
-//
-//        findViewById(R.id.button_slow).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (playState == 0) {  /** state : stop */
-//                    playState = 2;  /** state -> slow  */
-//                    audioTrack.play();
-//                    recordingAndPlay();
-//                } else if (playState == 1) {  /** state : normal */
-//                    bIsRecording = false;
-//                    audioTrack.stop();
-//                    playState = 2;  /** state -> slow  */
-//                    audioTrack.play();
-//                    recordingAndPlay();
-//                }  /** state : slow ... 何もしない */
-//            }
-//        });
-//        findViewById(R.id.button1).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                audioTrack.play();
-//                recordingAndPlay();
-//            }
-//        });
     }
 
     @Override
@@ -452,11 +329,10 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
     public void setNewFragment(FrgmType CallFragment) {
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
-        // fTop = CallFragment;
         switch (CallFragment) {
-            case fRoot : ft.replace(R.id.root, new RootMenu(), "Root"); break;
-            case fAlbum : ft.replace(R.id.root, new AlbumMenu(), "album"); break;
-            case fArtist : ft.replace(R.id.root, new ArtistMenu(), "artist"); break;
+            case fRoot : ft.replace(id.root, new RootMenu(), "Root"); break;
+            case fAlbum : ft.replace(id.root, new AlbumMenu(), "album"); break;
+            case fArtist : ft.replace(id.root, new ArtistMenu(), "artist"); break;
         }
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.addToBackStack(null);
@@ -542,12 +418,99 @@ public class MainActivity extends FragmentActivity implements NavigationView.OnN
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             ListView lv = (ListView) parent;
             Track item = (Track) lv.getItemAtPosition(position);
-            Toast.makeText(MainActivity.this, "LongClick: " + item.uri, Toast.LENGTH_LONG).show();
+            focusTrack(item);
+
+            changeAlbumArt();
+
+            Toast.makeText(MainActivity.this, "LongClick: " + item.album, Toast.LENGTH_LONG).show();
             mediaPlayer = MediaPlayer.create(MainActivity.this, item.uri);
             mediaPlayer.start();
-            audioTrack.play();
-            recordingAndPlay();
             return true;
         }
     };
+
+    public void changeAlbumArt() {
+        Bitmap album_art_ = null;
+        long albumId = focusedTrack.albumId;
+        Uri albumArtUri = Uri.parse(
+                "content://media/external/audio/albumart");
+        Uri albumUri = ContentUris.withAppendedId(albumArtUri, albumId);
+        ContentResolver cr = getContentResolver();
+        try {
+            InputStream is = cr.openInputStream(albumUri);
+            album_art_ = BitmapFactory.decodeStream(is);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        ImageView album_art_root = (ImageView) findViewById(R.id.imageViewHome);
+        album_art_root.setImageBitmap(album_art_);
+    }
+
+    /**
+     * ToggleSwitch をクリックしたときの動作
+     */
+    public SwitchCompat.OnCheckedChangeListener toggleOutsideClickListener = new SwitchCompat.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {  /** isChecked で outside ON */
+            Toast.makeText(MainActivity.this, "outside", Toast.LENGTH_SHORT).show();
+            if (isChecked) {
+                playState = 2;  /** state : play */
+                audioTrack.play();
+                recordingAndPlay();
+            } else {
+                playState = 0;  /** state : stop */
+                bIsRecording = false;
+                audioTrack.stop();
+            }
+        }
+    };
+
+//    /**
+//     * RootMenu のボタンをクリックしたときの動作
+//     */
+//    public Button.OnClickListener outsideClickListener = new Button.OnClickListener() {
+//        @Override
+//        public void onClick(View view) {
+//            Toast.makeText(MainActivity.this, "outside", Toast.LENGTH_SHORT).show();
+//            if (playState == 0) {  /** state : stop */
+//                playState = 1;  /** state : play */
+//                audioTrack.play();
+//                recordingAndPlay();
+//            } else if (playState == 2) {  /** state : slow */
+//                bIsRecording = false;
+//                audioTrack.stop();
+//                playState = 1;  /** state : play */
+//                try {
+//                    Thread.sleep(100);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                audioTrack.play();
+//                recordingAndPlay();
+//            }  /** state : play ... 何もしない */
+//        }
+//    };
+//    public Button.OnClickListener slowClickListener = new Button.OnClickListener() {
+//        @Override
+//        public void onClick(View view) {
+//            Toast.makeText(MainActivity.this, "slow", Toast.LENGTH_SHORT).show();
+//            if (playState == 0) {  /** state : stop */
+//                playState = 2;  /** state : play */
+//                audioTrack.play();
+//                recordingAndPlay();
+//            } else if (playState == 1) {  /** state : play */
+//                bIsRecording = false;
+//                audioTrack.stop();
+//                playState = 2;  /** state : slow */
+//                try {
+//                    Thread.sleep(100);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                audioTrack.play();
+//                recordingAndPlay();
+//            } /** state : slow ... 何もしない */
+//        }
+//    };
 }

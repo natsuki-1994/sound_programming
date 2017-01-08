@@ -140,10 +140,10 @@ public class ArtistMenu extends Fragment{
         ListView trackList = (ListView) partView.findViewById(R.id.list);
         track_adapter = new ListTrackAdapter(activity, tracks);
         trackList.setAdapter(track_adapter);
-//        /**
-//         * trackList がクリックされたら曲の再生
-//         */
-//        trackList.setOnItemClickListener(activity.TrackClickListener);
+
+        /**
+         * trackList がクリックされたら曲の再生
+         */
         trackList.setOnItemLongClickListener(activity.TrackLongClickListener);
 
         return partView;

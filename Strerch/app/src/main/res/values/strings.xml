@@ -33,9 +33,12 @@
     <string name="albumtitle">AlbumTitle</string>
     <string name="spinner">spinner</string>
     <string name="Tracks">Tracks</string>
-    <string name="sample_player">Sample Player</string>
+    <string name="sample_player">BDM Sound Player</string>
     <string name="this_is_sample_application">This is Sample Application</string>
     <string name="music_stretch_player">Music Stretch Player</string>
     <string name="natsuki">natsuki</string>
     <string name="home">ホーム</string>
+    <string name="outside">outside</string>
+    <string name="album">album</string>
+    <string name="track">track</string>
 </resources>
