@@ -108,7 +108,7 @@ public class RootMenu extends Fragment {
 
     }
 
-    public static class HomeSectionFragment extends Fragment {
+    public static class HomeSectionFragment extends Fragment{
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -122,13 +122,8 @@ public class RootMenu extends Fragment {
             View v = inflater.inflate(R.layout.menu_home, container, false);
             SwitchCompat toggleOutside = (SwitchCompat) v.findViewById(R.id.toggleOutside);
             Button buttonPlayPause = (Button) v.findViewById(R.id.c_btn);
-//            SeekBar mseekBarPosition = (SeekBar) v.findViewById(R.id.seekBar);
-//            mseekBarPosition.setProgress(0);
-//            mseekBarPosition.setOnSeekBarChangeListener(this);
-//            SwitchCompat toggleSlow = (SwitchCompat) v.findViewById(R.id.toggleSlow);
-//            ImageView view_view = (ImageView) v.findViewById(R.id.imageViewHome);
-//            TextView track_root = (TextView) v.findViewById(R.id.textView_track);
-//            TextView artist_root = (TextView) v.findViewById(R.id.textView_artist);
+            activity.changeSeekbar();
+
             /**
              * toggleButton（toggleOutside）をクリックしたときの動作
              * メソッドは MainActivity で定義
@@ -140,45 +135,8 @@ public class RootMenu extends Fragment {
              */
             buttonPlayPause.setOnClickListener(activity.buttonPlayPauseClickListener);
 
-//            if (activity.focusedTrack == null) {
-//                view_view.setImageResource(R.mipmap.ic_launcher);
-//            } else {
-//                Bitmap album_art_ = null;
-//                long albumId = activity.focusedTrack.albumId;
-//                Uri albumArtUri = Uri.parse(
-//                        "content://media/external/audio/albumart");
-//                Uri albumUri = ContentUris.withAppendedId(albumArtUri, albumId);
-//                ContentResolver cr = activity.getContentResolver();
-//                try {
-//                    InputStream is = cr.openInputStream(albumUri);
-//                    album_art_ = BitmapFactory.decodeStream(is);
-//                } catch (FileNotFoundException e) {
-//                    e.printStackTrace();
-//                }
-//                view_view.setImageBitmap(album_art_);
-//                track_root.setText(activity.focusedTrack.title);
-//                artist_root.setText(activity.focusedTrack.artist);
-//            }
-
             return v;
         }
-
-//        @Override
-//        public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-//            MainActivity activity = (MainActivity) getActivity();
-//            activity.mPlayer.seekTo(i);
-//
-//        }
-//
-//        @Override
-//        public void onStartTrackingTouch(SeekBar seekBar) {
-//
-//        }
-//
-//        @Override
-//        public void onStopTrackingTouch(SeekBar seekBar) {
-//
-//        }
     }
 
     public static class TrackSectionFragment extends Fragment {

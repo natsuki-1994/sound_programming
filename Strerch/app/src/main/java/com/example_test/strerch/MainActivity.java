@@ -21,7 +21,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
@@ -356,10 +355,10 @@ public class MainActivity extends FragmentActivity {
 
     private Handler threadHandler = new Handler() {
         public void handleMessage(Message msg) {
-            LayoutInflater factory = LayoutInflater.from(MainActivity.this);
-            View layInfView = factory.inflate(layout.menu_home, null);
-            SeekBar mSeekBarPosition = (SeekBar) layInfView.findViewById(R.id.seekBar);
-//            SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
+//            LayoutInflater factory = LayoutInflater.from(MainActivity.this);
+//            View layInfView = factory.inflate(layout.menu_home, null);
+//            SeekBar mSeekBarPosition = (SeekBar) layInfView.findViewById(R.id.seekBar);
+            SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
             mSeekBarPosition.setProgress(msg.what);
         }
     };
