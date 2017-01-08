@@ -14,23 +14,29 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import org.jtransforms.fft.DoubleFFT_1D;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
 
@@ -57,13 +63,18 @@ public class MainActivity extends FragmentActivity {
     AudioRecord audioRec = null;
     AudioTrack audioTrack;
     boolean bIsRecording = false;
-    MediaPlayer mediaPlayer;
     int bufInSizeByteMin;
     int bufInSizeByte;
     int bufInSizeShort;
     int SAMPLING_RATE = 44100;
     int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
     int fftSize = 4096;
+
+    /**
+     * MediaPlayer 関連の変数
+     */
+    MediaPlayer mPlayer;
+    int mTotalTime;
 
     /**
      * API のバージョンをチェック, API version < 23 なら何もしない
@@ -316,7 +327,42 @@ public class MainActivity extends FragmentActivity {
                 AudioFormat.ENCODING_PCM_16BIT,
                 bufInSizeByte * 2,
                 AudioTrack.MODE_STREAM);
+
+        /**
+         * MediaPlayer の初期化
+         */
+        mPlayer = MediaPlayer.create(this, R.raw.pcm);
     }
+
+    public void changeSeekbar() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (mPlayer != null) {
+                        int currentPosition = mPlayer.getCurrentPosition();
+                        Log.v("AudioSeek", String.valueOf(currentPosition));
+                        Message msg = new Message();
+                        msg.what = currentPosition;
+                        threadHandler.sendMessage(msg);
+                    }
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private Handler threadHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            LayoutInflater factory = LayoutInflater.from(MainActivity.this);
+            View layInfView = factory.inflate(layout.menu_home, null);
+            SeekBar mSeekBarPosition = (SeekBar) layInfView.findViewById(R.id.seekBar);
+//            SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
+            mSeekBarPosition.setProgress(msg.what);
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -422,14 +468,17 @@ public class MainActivity extends FragmentActivity {
             focusTrack(item);
 
             changeInformation();
+            try {
+                changeTrack();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             Toast.makeText(MainActivity.this, "LongClick: " + item.album, Toast.LENGTH_LONG).show();
-            mediaPlayer = MediaPlayer.create(MainActivity.this, item.uri);
-            mediaPlayer.start();
+
             return true;
         }
     };
-
     public void changeInformation() {
         Bitmap album_art_ = null;
         long albumId = focusedTrack.albumId;
@@ -451,6 +500,20 @@ public class MainActivity extends FragmentActivity {
         TextView artist_root = (TextView) findViewById(R.id.textView_artist);
         artist_root.setText(focusedTrack.artist);
     }
+    public void changeTrack() throws IOException {
+        Button buttonPlayPause =  (Button) findViewById(R.id.c_btn);
+        SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
+
+        if (mPlayer.isPlaying()) {
+            mPlayer.stop();
+            mPlayer.prepare();
+        }
+        mPlayer = MediaPlayer.create(this, focusedTrack.uri);
+        mPlayer.start();
+        mTotalTime = mPlayer.getDuration();
+        mSeekBarPosition.setMax(mTotalTime);
+        buttonPlayPause.setText("PAUSE");
+    }
 
     /**
      * ToggleSwitch をクリックしたときの動作
@@ -470,6 +533,31 @@ public class MainActivity extends FragmentActivity {
             }
         }
     };
+
+    /**
+     * PLAY / PAUSE ボタン押したとき
+     */
+    public Button.OnClickListener buttonPlayPauseClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            changeInformationPlayPause();
+        }
+    };
+    public void changeInformationPlayPause() {
+        Button buttonPlayPause =  (Button) findViewById(R.id.c_btn);
+        SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
+
+        if (mPlayer.isPlaying()) {
+            mPlayer.pause();
+            buttonPlayPause.setText("PLAY");
+        } else {
+            mPlayer.start();
+            mTotalTime = mPlayer.getDuration();
+            mSeekBarPosition.setMax(mTotalTime);
+//            mSeekBarPosition.setProgress(mTotalTime / 2);
+            buttonPlayPause.setText("PAUSE");
+        }
+    }
 
 //    /**
 //     * RootMenu のボタンをクリックしたときの動作

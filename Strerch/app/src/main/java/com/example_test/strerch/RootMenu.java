@@ -11,6 +11,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ListView;
 
 import java.util.List;
@@ -108,7 +109,6 @@ public class RootMenu extends Fragment {
     }
 
     public static class HomeSectionFragment extends Fragment {
-
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -121,6 +121,10 @@ public class RootMenu extends Fragment {
              */
             View v = inflater.inflate(R.layout.menu_home, container, false);
             SwitchCompat toggleOutside = (SwitchCompat) v.findViewById(R.id.toggleOutside);
+            Button buttonPlayPause = (Button) v.findViewById(R.id.c_btn);
+//            SeekBar mseekBarPosition = (SeekBar) v.findViewById(R.id.seekBar);
+//            mseekBarPosition.setProgress(0);
+//            mseekBarPosition.setOnSeekBarChangeListener(this);
 //            SwitchCompat toggleSlow = (SwitchCompat) v.findViewById(R.id.toggleSlow);
 //            ImageView view_view = (ImageView) v.findViewById(R.id.imageViewHome);
 //            TextView track_root = (TextView) v.findViewById(R.id.textView_track);
@@ -130,6 +134,11 @@ public class RootMenu extends Fragment {
              * メソッドは MainActivity で定義
              */
             toggleOutside.setOnCheckedChangeListener(activity.toggleOutsideClickListener);
+
+            /**
+             * Play / Pause ボタン押したとき
+             */
+            buttonPlayPause.setOnClickListener(activity.buttonPlayPauseClickListener);
 
 //            if (activity.focusedTrack == null) {
 //                view_view.setImageResource(R.mipmap.ic_launcher);
@@ -154,6 +163,22 @@ public class RootMenu extends Fragment {
             return v;
         }
 
+//        @Override
+//        public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+//            MainActivity activity = (MainActivity) getActivity();
+//            activity.mPlayer.seekTo(i);
+//
+//        }
+//
+//        @Override
+//        public void onStartTrackingTouch(SeekBar seekBar) {
+//
+//        }
+//
+//        @Override
+//        public void onStopTrackingTouch(SeekBar seekBar) {
+//
+//        }
     }
 
     public static class TrackSectionFragment extends Fragment {
