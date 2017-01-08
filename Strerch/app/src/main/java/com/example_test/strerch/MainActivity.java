@@ -220,19 +220,36 @@ public class MainActivity extends FragmentActivity {
 
                                 /**
                                  * FFT 実行
-                                 * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
+                                 * <前に使ったAPIでは>変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
                                  */
                                 fft.realForward(fftData);
 
                                 /**
                                  * 周波数シフトを行う
                                  */
+
+                                /*
+                                 Nが偶数なら
+                                  fftData[n]: { Re[0], Re[n/2], Re[1], Im[1], Re[2], Im[2], ..., Re[n/2-1], Im[n/2-1] }
+                                  ドキュメント参照 http://wendykierp.github.io/JTransforms/apidocs/
+                                 */
+                                for (int j = 0; 2*j < fftSize; j += 2) {
+                                    if (j % 2 == 0) {
+                                        ifftData[2 * j]     = fftData[j];
+                                        ifftData[2 * j + 1] = fftData[j + 1];
+                                    } else { //隙間はとりあえず0
+                                        ifftData[2 * j] = 0;
+                                        ifftData[2 * j + 1] = 0;
+                                    }
+                                }
+                                /* code for a previously used API
                                  for (int j = 0; j < fftSize / 2; j += 2) {
                                      ifftData[2 * j] = fftData[j];
                                      ifftData[2 * j + 1] = fftData[j + 1];
                                      ifftData[2 * j + 2] = fftData[j] / 10;
                                      ifftData[2 * j + 3] = 0;
                                  }
+                                 */
 
                                 /**
                                  * IFFT 実行
