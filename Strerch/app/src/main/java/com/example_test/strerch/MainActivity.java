@@ -62,7 +62,7 @@ public class MainActivity extends FragmentActivity {
     int bufInSizeShort;
     int SAMPLING_RATE = 44100;
     int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
-    int fftSize = 4096;
+    int fftSize = 1028;
 
     /**
      * API のバージョンをチェック, API version < 23 なら何もしない
