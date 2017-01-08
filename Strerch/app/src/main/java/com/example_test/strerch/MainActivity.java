@@ -62,7 +62,7 @@ public class MainActivity extends FragmentActivity {
     int bufInSizeShort;
     int SAMPLING_RATE = 44100;
     int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
-    int fftSize = 4096;
+    int fftSize = 1028;
 
     /**
      * API のバージョンをチェック, API version < 23 なら何もしない
@@ -106,6 +106,12 @@ public class MainActivity extends FragmentActivity {
                     short bufInStretched[] = new short[bufInSizeShort * 2];
                     short bufOut[] = new short[bufInSizeShort * 2];
                     LinkedList<Short> bufOutFifo = new LinkedList<>();
+
+                    //Prepare values of the window func
+                    double valWindowFunc[] = new double[bufInSizeShort];
+                    for (int i = 0; i < bufInSizeShort; i++) {
+                        valWindowFunc[i] = 0.54 - 0.46 * Math.cos(2 * Math.PI * i / bufInSizeShort); //Hamming Window
+                    }
 
                     while (bIsRecording) {
                         /**
@@ -187,6 +193,12 @@ public class MainActivity extends FragmentActivity {
                             //step 3: index bufInSizeShort - 1 (配列の最後) には 右隣がないので、 左隣の値をセット
                             bufInStretched[bufInSizeShort - 1] = bufInStretched[bufInSizeShort - 2];
 
+                            /**
+                             * 窓関数を適用
+                             */
+                            for (int i = 0; i < bufInSizeShort; i++) {
+                                bufInStretched[i] = (short)(bufInStretched[i] * valWindowFunc[i]);
+                            }
 
                             /**
                              * fft 処理
