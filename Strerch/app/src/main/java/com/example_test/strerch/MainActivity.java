@@ -107,10 +107,10 @@ public class MainActivity extends FragmentActivity {
                     short bufOut[] = new short[bufInSizeShort * 2];
                     LinkedList<Short> bufOutFifo = new LinkedList<>();
 
-                    //Prepare values of the window func
-                    double valWindowFunc[] = new double[bufInSizeShort];
-                    for (int i = 0; i < bufInSizeShort; i++) {
-                        valWindowFunc[i] = 0.54 - 0.46 * Math.cos(2 * Math.PI * i / bufInSizeShort); //Hamming Window
+                    //Prepare values of the window func (# of value = bufInSizeShort)
+                    double valWindowFunc[] = new double[2 * bufInSizeShort];
+                    for (int i = 0; i < 2 * bufInSizeShort; i++) {
+                        valWindowFunc[i] = 0.54 - 0.46 * Math.cos(2 * Math.PI * i / (2 * bufInSizeShort)); //Hamming Window
                     }
 
                     while (bIsRecording) {
@@ -180,23 +180,23 @@ public class MainActivity extends FragmentActivity {
                              * 1/2 倍速 にする
                              */
 
-                            //step 1: index 0, 2, 4... (bufInSizeShort - 2) にbufInの数値をセット
+                            //step 1: index 0, 2, 4... (2 * bufInSizeShort - 2) にbufInの数値をセット
                             for (int i = 0; i < bufInSizeShort; i++) {
                                 bufInStretched[2 * i] = bufIn[i];
                             }
 
-                            //step 2: index 1, 3, 5... (bufInSizeShort - 3) に両隣の値の平均値をセット
+                            //step 2: index 1, 3, 5... (2 * bufInSizeShort - 3) に両隣の値の平均値をセット
                             for (int i = 0; i < bufInSizeShort - 1; i++) {
                                 bufInStretched[2 * i + 1] = (short) ((bufInStretched[2 * i] + bufInStretched[2 * i + 2]) / 2);
                             }
 
-                            //step 3: index bufInSizeShort - 1 (配列の最後) には 右隣がないので、 左隣の値をセット
+                            //step 3: index (2 * bufInSizeShort - 1) (配列の最後) には 右隣がないので、 左隣の値をセット
                             bufInStretched[bufInSizeShort - 1] = bufInStretched[bufInSizeShort - 2];
 
                             /**
                              * 窓関数を適用
                              */
-                            for (int i = 0; i < bufInSizeShort; i++) {
+                            for (int i = 0; i < 2 * bufInSizeShort; i++) {
                                 bufInStretched[i] = (short)(bufInStretched[i] * valWindowFunc[i]);
                             }
 
