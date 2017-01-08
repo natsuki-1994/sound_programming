@@ -181,7 +181,7 @@ public class MainActivity extends FragmentActivity {
 
                             //step 2: index 1, 3, 5... (bufInSizeShort - 3) に両隣の値の平均値をセット
                             for (int i = 0; i < bufInSizeShort - 1; i++) {
-                                bufInStretched[2 * i + 1] = (bufInStretched[2 * i] + bufInStretched[2 * i + 2]) / 2.0;
+                                bufInStretched[2 * i + 1] = (short) ((bufInStretched[2 * i] + bufInStretched[2 * i + 2]) / 2);
                             }
 
                             //step 3: index bufInSizeShort - 1 (配列の最後) には 右隣がないので、 左隣の値をセット
