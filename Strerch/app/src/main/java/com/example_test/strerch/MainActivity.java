@@ -173,10 +173,20 @@ public class MainActivity extends FragmentActivity {
                             /**
                              * 1/2 倍速 にする
                              */
+
+                            //step 1: index 0, 2, 4... (bufInSizeShort - 2) にbufInの数値をセット
                             for (int i = 0; i < bufInSizeShort; i++) {
                                 bufInStretched[2 * i] = bufIn[i];
-                                bufInStretched[2 * i + 1] = bufIn[i];
                             }
+
+                            //step 2: index 1, 3, 5... (bufInSizeShort - 3) に両隣の値の平均値をセット
+                            for (int i = 0; i < bufInSizeShort - 1; i++) {
+                                bufInStretched[2 * i + 1] = (bufInStretched[2 * i] + bufInStretched[2 * i + 2]) / 2.0;
+                            }
+
+                            //step 3: index bufInSizeShort - 1 (配列の最後) には 右隣がないので、 左隣の値をセット
+                            bufInStretched[bufInSizeShort - 1] = bufInStretched[bufInSizeShort - 2];
+
 
                             /**
                              * fft 処理
