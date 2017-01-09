@@ -41,4 +41,13 @@
     <string name="outside">outside</string>
     <string name="album">album</string>
     <string name="track">track</string>
+
+    <string name="icon_play">&#xf04b;</string>
+    <string name="icon_pause">&#xf04c;</string>
+    <string name="icon_next">&#xf050;</string>
+    <string name="icon_back">&#xf049;</string>
+    <string name="music">Music</string>
+    <string name="outside_">Outside</string>
+    <string name="normal">Normal</string>
+    <string name="slow">Slow</string>
 </resources>

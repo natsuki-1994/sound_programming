@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -55,6 +56,7 @@ public class MainActivity extends FragmentActivity {
     private static Album focusedAlbum;
     private static Artist focusedArtist;
     public Track focusedTrack;
+    private Fragment focusedFragment;
 
     /**
      * Audio 関連の変数
@@ -274,6 +276,7 @@ public class MainActivity extends FragmentActivity {
         setContentView(layout.activity_main);  /** layout を設定 */
         requestPermission();  /** API23 以上で Permission 取得を Activity で行う */
 
+//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         /**
          * Fragment の初期化
          * onCreate では activity_main.xml の R.id.root には RootMenu Fragment を配置
@@ -340,7 +343,6 @@ public class MainActivity extends FragmentActivity {
                 try {
                     while (mPlayer != null) {
                         int currentPosition = mPlayer.getCurrentPosition();
-                        Log.v("AudioSeek", String.valueOf(currentPosition));
                         Message msg = new Message();
                         msg.what = currentPosition;
                         threadHandler.sendMessage(msg);
@@ -355,11 +357,25 @@ public class MainActivity extends FragmentActivity {
 
     private Handler threadHandler = new Handler() {
         public void handleMessage(Message msg) {
-//            LayoutInflater factory = LayoutInflater.from(MainActivity.this);
-//            View layInfView = factory.inflate(layout.menu_home, null);
-//            SeekBar mSeekBarPosition = (SeekBar) layInfView.findViewById(R.id.seekBar);
-            SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
+            final SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
             mSeekBarPosition.setProgress(msg.what);
+            mSeekBarPosition.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                    if (b) {
+                        mPlayer.seekTo(i);
+                        mSeekBarPosition.setProgress(i);
+                    }
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
+                }
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+
+                }
+            });
         }
     };
 
@@ -375,7 +391,13 @@ public class MainActivity extends FragmentActivity {
     public void setNewFragment(FrgmType CallFragment) {
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
+        Fragment focusedFragmentAlbum = new AlbumMenu();
+        Fragment focusedFragmentArtist = new ArtistMenu();
+
         switch (CallFragment) {
+//            case fRoot : ft.replace(id.root, new RootMenu(), "Root"); break;
+//            case fAlbum : ft.replace(id.root, new AlbumMenu(), "album"); break;
+//            case fArtist : ft.replace(id.root, new ArtistMenu(), "artist"); break;
             case fRoot : ft.replace(id.root, new RootMenu(), "Root"); break;
             case fAlbum : ft.replace(id.root, new AlbumMenu(), "album"); break;
             case fArtist : ft.replace(id.root, new ArtistMenu(), "artist"); break;
@@ -398,7 +420,7 @@ public class MainActivity extends FragmentActivity {
     public void focusArtist(Artist item) { if (item != null) focusedArtist = item; }
     public Artist getFocusedArtist() { return focusedArtist; }
     public void focusTrack(Track item) { if (item != null) focusedTrack = item; }
-    public Track getFocusedTrack() { return  focusedTrack; }
+//    public Track getFocusedTrack() { return  focusedTrack; }
 
     /**
      * アルバム一覧をクリックしたときの動作
@@ -511,7 +533,7 @@ public class MainActivity extends FragmentActivity {
         mPlayer.start();
         mTotalTime = mPlayer.getDuration();
         mSeekBarPosition.setMax(mTotalTime);
-        buttonPlayPause.setText("PAUSE");
+        buttonPlayPause.setText(R.string.icon_pause);
     }
 
     /**
@@ -548,13 +570,13 @@ public class MainActivity extends FragmentActivity {
 
         if (mPlayer.isPlaying()) {
             mPlayer.pause();
-            buttonPlayPause.setText("PLAY");
+            buttonPlayPause.setText(R.string.icon_play);
         } else {
             mPlayer.start();
             mTotalTime = mPlayer.getDuration();
             mSeekBarPosition.setMax(mTotalTime);
 //            mSeekBarPosition.setProgress(mTotalTime / 2);
-            buttonPlayPause.setText("PAUSE");
+            buttonPlayPause.setText(R.string.icon_pause);
         }
     }
 

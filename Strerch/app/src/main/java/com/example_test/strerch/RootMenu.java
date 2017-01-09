@@ -1,5 +1,6 @@
 package com.example_test.strerch;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -108,7 +109,8 @@ public class RootMenu extends Fragment {
 
     }
 
-    public static class HomeSectionFragment extends Fragment{
+    public static class HomeSectionFragment extends Fragment {
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -122,7 +124,14 @@ public class RootMenu extends Fragment {
             View v = inflater.inflate(R.layout.menu_home, container, false);
             SwitchCompat toggleOutside = (SwitchCompat) v.findViewById(R.id.toggleOutside);
             Button buttonPlayPause = (Button) v.findViewById(R.id.c_btn);
+            Button buttonNext = (Button) v.findViewById(R.id.c_btn_next);
+            Button buttonBack = (Button) v.findViewById(R.id.c_btn_back);
             activity.changeSeekbar();
+
+            Typeface font = Typeface.createFromAsset(activity.getAssets(), "fontawesome-webfont.ttf");
+            buttonPlayPause.setTypeface(font);
+            buttonNext.setTypeface(font);
+            buttonBack.setTypeface(font);
 
             /**
              * toggleButton（toggleOutside）をクリックしたときの動作
