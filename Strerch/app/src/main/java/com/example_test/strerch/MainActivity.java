@@ -203,7 +203,7 @@ public class MainActivity extends FragmentActivity {
                                 int timesOfResampling = 2; //これをnに設定->n倍にタイムストレッチ
                                 /*** stereo に変更して bufOutFifo にn回プッシュ***/
                                 for (int k = 0; k < timesOfResampling; k++) {
-                                    for (int j = 0; j < bufInStretched.length; j++) {
+                                    for (int j = 0; j < resampleChunk.length; j++) {
                                         bufOutFifo.offer(resampleChunk[j]);
                                         bufOutFifo.offer(resampleChunk[j]);
                                     }
