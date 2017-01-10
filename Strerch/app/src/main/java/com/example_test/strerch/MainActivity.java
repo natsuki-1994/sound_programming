@@ -234,35 +234,29 @@ public class MainActivity extends FragmentActivity {
                                   fftData[n]: { Re[0], Re[n/2], Re[1], Im[1], Re[2], Im[2], ..., Re[n/2-1], Im[n/2-1] }
                                   ドキュメント参照 http://wendykierp.github.io/JTransforms/apidocs/
                                  */
-//                                for (int j = 0; 2*j < fftSize; j += 2) {
-//                                    if (j % 2 == 0) {
-//                                        ifftData[2 * j]     = fftData[j];
-//                                        ifftData[2 * j + 1] = fftData[j + 1];
-//                                    } else { //隙間はとりあえず0
-//                                        ifftData[2 * j] = 0;
-//                                        ifftData[2 * j + 1] = 0;
-//                                    }
-//                                }
-                                /* code for a previously used API
-                                 for (int j = 0; j < fftSize / 2; j += 2) {
-                                     ifftData[2 * j] = fftData[j];
-                                     ifftData[2 * j + 1] = fftData[j + 1];
-                                     ifftData[2 * j + 2] = fftData[j] / 10;
-                                     ifftData[2 * j + 3] = 0;
-                                 }
-                                 */
+//                                 for (int j = 0; j < ifftData.length; j += 4) {
+//                                     ifftData[j]     = fftData[j / 2];
+//                                     ifftData[j + 1] = fftData[j / 2 + 1];
+//                                     ifftData[j + 2] = 0;
+//                                     ifftData[j + 3] = 0;
+//                                 }
+
+                                //shiftなし(テスト用)
+                                for (int j = 0 ; j < fftSize; j++) {
+                                    ifftData[j] = fftData[j];
+                                }
 
                                 /**
                                  * IFFT 実行
                                  */
-                                fft.realInverse(fftData, true);
+                                fft.realInverse(ifftData, true);
 
                                 /**
                                  * stereo に変更して bufOutFifo にプッシュ
                                  */
                                 for (int j = 0; j < fftSize; j++) {
-                                    bufOutFifo.offer((short) (fftData[j] * Short.MAX_VALUE));
-                                    bufOutFifo.offer((short) (fftData[j] * Short.MAX_VALUE));
+                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
                                 }
                             }
                         }
