@@ -62,7 +62,7 @@ public class MainActivity extends FragmentActivity {
     int bufInSizeShort;
     int SAMPLING_RATE = 44100;
     int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
-    int fftSize = 1024;
+    int fftSize = 32768;
 
     /**
      * API のバージョンをチェック, API version < 23 なら何もしない
@@ -120,34 +120,35 @@ public class MainActivity extends FragmentActivity {
                         audioRec.read(bufIn, 0, bufInSizeShort);
 
                         if (playState == 1) {  /** state : play */
+//                            /**
+//                             * stereo に変更する
+//                             */
+//                            for (int i = 0; i < bufInSizeShort; i++) {
+//                                bufOutFifo.offer(bufIn[i]);
+//                                bufOutFifo.offer(bufIn[i]);
+//                            }
+
+                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize * 2);
+                            double fftData[] = new double[fftSize * 2];
+                            double ifftData[] = new double[fftSize * 2];
+
                             /**
-                             * stereo に変更する
+                             * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
                              */
-                            for (int i = 0; i < bufInSizeShort; i++) {
-                                bufOutFifo.offer(bufIn[i]);
-                                bufOutFifo.offer(bufIn[i]);
+                            for (int j = 0; j < fftSize; j++) {
+                                fftData[2 * j] = (bufIn[j] * 1.0) / Short.MAX_VALUE;
+                                fftData[2 * j + 1] = (bufIn[j] * 1.0) / Short.MAX_VALUE;
                             }
 
-//                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);
-//                            double fftData[] = new double[fftSize];
-//                            double ifftData[] = new double[fftSize];
-//
-//                            /**
-//                             * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
-//                             */
-//                            for (int j = 0; j < fftSize; j++) {
-//                                fftData[j] = (bufIn[j] * 1.0) / Short.MAX_VALUE;
-//                            }
-//
-//                            /**
-//                             * FFT 実行
-//                             * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
-//                             */
-//                            fft.realForward(fftData);
-//
-////                            for (int j = 0; j < fftSize; j++) {
-////                               ifftData[j] = fftData[j];
-////                            }
+                            /**
+                             * FFT 実行
+                             * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
+                             */
+                            fft.realForward(fftData);
+
+                            for (int j = 0; j < fftSize * 2; j++) {
+                               ifftData[j] = fftData[j];
+                            }
 //
 //                            /**
 //                             * 周波数シフトを行う
@@ -163,18 +164,18 @@ public class MainActivity extends FragmentActivity {
 //                                ifftData[2 * j + 3] = 0;
 //                            }
 //
-//                            /**
-//                             * IFFT 実行
-//                             */
-//                            fft.realInverse(ifftData, true);
-//
-//                            /**
-//                             * stereo に変更して bufOutFifo にプッシュ
-//                             */
-//                            for (int j = 0; j < fftSize; j++) {
-//                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-//                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-//                            }
+                            /**
+                             * IFFT 実行
+                             */
+                            fft.realInverse(ifftData, true);
+
+                            /**
+                             * stereo に変更して bufOutFifo にプッシュ
+                             */
+                            for (int j = 0; j < fftSize * 2; j++) {
+                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+                            }
                         } else if (playState == 2) {  /** state : slow */
                             /**
                              * 1/2 倍速 にする
@@ -193,12 +194,12 @@ public class MainActivity extends FragmentActivity {
                             //step 3: index (2 * bufInSizeShort - 1) (配列の最後) には 右隣がないので、 左隣の値をセット
                             bufInStretched[bufInSizeShort - 1] = bufInStretched[bufInSizeShort - 2];
 
-                            /**
-                             * 窓関数を適用
-                             */
-                            for (int i = 0; i < 2 * bufInSizeShort; i++) {
-                                bufInStretched[i] = (short)(bufInStretched[i] * valWindowFunc[i]);
-                            }
+//                            /**
+//                             * 窓関数を適用
+//                             */
+//                            for (int i = 0; i < 2 * bufInSizeShort; i++) {
+//                                bufInStretched[i] = (short)(bufInStretched[i] * valWindowFunc[i]);
+//                            }
 
                             /**
                              * fft 処理
@@ -233,15 +234,15 @@ public class MainActivity extends FragmentActivity {
                                   fftData[n]: { Re[0], Re[n/2], Re[1], Im[1], Re[2], Im[2], ..., Re[n/2-1], Im[n/2-1] }
                                   ドキュメント参照 http://wendykierp.github.io/JTransforms/apidocs/
                                  */
-                                for (int j = 0; 2*j < fftSize; j += 2) {
-                                    if (j % 2 == 0) {
-                                        ifftData[2 * j]     = fftData[j];
-                                        ifftData[2 * j + 1] = fftData[j + 1];
-                                    } else { //隙間はとりあえず0
-                                        ifftData[2 * j] = 0;
-                                        ifftData[2 * j + 1] = 0;
-                                    }
-                                }
+//                                for (int j = 0; 2*j < fftSize; j += 2) {
+//                                    if (j % 2 == 0) {
+//                                        ifftData[2 * j]     = fftData[j];
+//                                        ifftData[2 * j + 1] = fftData[j + 1];
+//                                    } else { //隙間はとりあえず0
+//                                        ifftData[2 * j] = 0;
+//                                        ifftData[2 * j + 1] = 0;
+//                                    }
+//                                }
                                 /* code for a previously used API
                                  for (int j = 0; j < fftSize / 2; j += 2) {
                                      ifftData[2 * j] = fftData[j];
@@ -254,14 +255,14 @@ public class MainActivity extends FragmentActivity {
                                 /**
                                  * IFFT 実行
                                  */
-                                fft.realInverse(ifftData, true);
+                                fft.realInverse(fftData, true);
 
                                 /**
                                  * stereo に変更して bufOutFifo にプッシュ
                                  */
                                 for (int j = 0; j < fftSize; j++) {
-                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+                                    bufOutFifo.offer((short) (fftData[j] * Short.MAX_VALUE));
+                                    bufOutFifo.offer((short) (fftData[j] * Short.MAX_VALUE));
                                 }
                             }
                         }
@@ -494,7 +495,7 @@ public class MainActivity extends FragmentActivity {
         public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {  /** isChecked で outside ON */
             Toast.makeText(MainActivity.this, "outside", Toast.LENGTH_SHORT).show();
             if (isChecked) {
-                playState = 2;  /** state : play */
+                playState = 1;  /** state : play */
                 audioTrack.play();
                 recordingAndPlay();
             } else {
