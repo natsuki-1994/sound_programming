@@ -70,6 +70,9 @@ public class MainActivity extends FragmentActivity {
     int SAMPLING_RATE = 44100;
     int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
     int fftSize = 4096;
+    int TEMPLATE_SIZE = 441;
+    int P_MIN = 220;
+    int P_MAX = 882;
 
     /**
      * MediaPlayer 関連の変数
@@ -127,6 +130,44 @@ public class MainActivity extends FragmentActivity {
                         audioRec.read(bufIn, 0, bufInSizeShort);
 
                         if (playState == 1) {  /** state : play */
+
+                            int offset0 = 0;
+                            int offset1 = 0;
+                            int pFound;
+
+                            short al[] = new short[TEMPLATE_SIZE];
+                            short bl[] = new short[TEMPLATE_SIZE];
+                            short cl[] = new short[(int) (bufIn.length * 1.5)];
+                            double temp;
+                            double r;
+
+                            while ((offset0 + P_MAX * 2) < bufInSizeShort) {
+                                for (int i = 0; i < TEMPLATE_SIZE; i++) {
+                                    al[i] = bufIn[offset0 + i];
+                                }
+                                double rMax = 0.0;
+                                pFound = P_MIN;
+
+                                for (int tau = P_MIN; tau < P_MAX; tau++) {
+                                    r = 0;
+                                    for (int j = 0; j < TEMPLATE_SIZE; j++) {
+                                        bl[j] = bufIn[offset0 + tau + j];
+                                    }
+                                    for (int j = 0; j < TEMPLATE_SIZE; j++) {
+                                        temp = al[j] * bl[j];
+                                        r += temp;
+                                    }
+                                    if (r > rMax) {
+                                        rMax = r;
+                                        pFound = tau;
+                                    }
+                                }
+
+                                for (int i = 0; i < pFound; i++) {
+                                    cl[offset1 + i] = bufIn[offset0 + i];
+                                }
+                            }
+
                             /**
                              * stereo に変更する
                              */
