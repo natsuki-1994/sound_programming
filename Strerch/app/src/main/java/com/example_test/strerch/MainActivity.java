@@ -216,7 +216,7 @@ public class MainActivity extends FragmentActivity {
                                  * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
                                  */
                                 for (int j = 0; j < fftSize; j++) {
-                                    fftData[j] = (bufInStretched[j] * 1.0) / Short.MAX_VALUE;
+                                    fftData[j] = (bufInStretched[j + i] * 1.0) / Short.MAX_VALUE;
                                 }
 
                                 /**
