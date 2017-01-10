@@ -62,7 +62,8 @@ public class MainActivity extends FragmentActivity {
     int bufInSizeShort;
     int SAMPLING_RATE = 44100;
     int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
-    int fftSize = 32768;
+    int fftSize;
+    int nbSamplesFadeIO;
 
     /**
      * API のバージョンをチェック, API version < 23 なら何もしない
@@ -177,87 +178,23 @@ public class MainActivity extends FragmentActivity {
                                 bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
                             }
                         } else if (playState == 2) {  /** state : slow */
-                            /**
-                             * 1/2 倍速 にする
-                             */
-
-                            //step 1: index 0, 2, 4... (2 * bufInSizeShort - 2) にbufInの数値をセット
-                            for (int i = 0; i < bufInSizeShort; i++) {
-                                bufInStretched[2 * i] = bufIn[i];
+                            //bufInにフェードイン、フェードアウト処理
+                            for (int j = 0; j < nbSamplesFadeIO; j++) {
+                                double rate = (double)j / (double)nbSamplesFadeIO;
+                                bufIn[j]                      *= rate;
+                                bufIn[bufIn.length - 1 - j]   *= rate;
                             }
 
-                            //step 2: index 1, 3, 5... (2 * bufInSizeShort - 3) に両隣の値の平均値をセット
-                            for (int i = 0; i < bufInSizeShort - 1; i++) {
-                                bufInStretched[2 * i + 1] = (short) ((bufInStretched[2 * i] + bufInStretched[2 * i + 2]) / 2);
+                            //二つ並べたものをbufInStretchedに格納
+                            for (int j = 0; j < bufIn.length; j++) {
+                                bufInStretched[j]                  = bufIn[j];
+                                bufInStretched[j + bufIn.length]   = bufIn[j];
                             }
 
-                            //step 3: index (2 * bufInSizeShort - 1) (配列の最後) には 右隣がないので、 左隣の値をセット
-                            bufInStretched[bufInSizeShort - 1] = bufInStretched[bufInSizeShort - 2];
-
-//                            /**
-//                             * 窓関数を適用
-//                             */
-//                            for (int i = 0; i < 2 * bufInSizeShort; i++) {
-//                                bufInStretched[i] = (short)(bufInStretched[i] * valWindowFunc[i]);
-//                            }
-
-                            /**
-                             * fft 処理
-                             *   fft      ... FFT インスタンスの生成
-                             *   fftData  ... FFT をかけるデータ（double 型）
-                             *   ifftData ... IFFT をかけるデータ（double 型）
-                             */
-                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);  /** fftSize = 4096 / bufInStretched = 4096 * 2 */
-                            double fftData[] = new double[fftSize];
-                            double ifftData[] = new double[fftSize];
-
-                            for (int i = 0; i < bufInStretched.length; i += fftSize) {
-                                /**
-                                 * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
-                                 */
-                                for (int j = 0; j < fftSize; j++) {
-                                    fftData[j] = (bufInStretched[j + i] * 1.0) / Short.MAX_VALUE;
-                                }
-
-                                /**
-                                 * FFT 実行
-                                 * <前に使ったAPIでは>変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
-                                 */
-                                fft.realForward(fftData);
-
-                                /**
-                                 * 周波数シフトを行う
-                                 */
-
-                                /*
-                                 Nが偶数なら
-                                  fftData[n]: { Re[0], Re[n/2], Re[1], Im[1], Re[2], Im[2], ..., Re[n/2-1], Im[n/2-1] }
-                                  ドキュメント参照 http://wendykierp.github.io/JTransforms/apidocs/
-                                 */
-//                                 for (int j = 0; j < ifftData.length; j += 4) {
-//                                     ifftData[j]     = fftData[j / 2];
-//                                     ifftData[j + 1] = fftData[j / 2 + 1];
-//                                     ifftData[j + 2] = 0;
-//                                     ifftData[j + 3] = 0;
-//                                 }
-
-                                //shiftなし(テスト用)
-                                for (int j = 0 ; j < fftSize; j++) {
-                                    ifftData[j] = fftData[j];
-                                }
-
-                                /**
-                                 * IFFT 実行
-                                 */
-                                fft.realInverse(ifftData, true);
-
-                                /**
-                                 * stereo に変更して bufOutFifo にプッシュ
-                                 */
-                                for (int j = 0; j < fftSize; j++) {
-                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-                                }
+                            /*** stereo に変更して bufOutFifo にプッシュ***/
+                            for (int j = 0; j < bufInStretched.length; j++) {
+                                bufOutFifo.offer(bufInStretched[j]);
+                                bufOutFifo.offer(bufInStretched[j]);
                             }
                         }
 
@@ -315,9 +252,10 @@ public class MainActivity extends FragmentActivity {
                 SAMPLING_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
+        fftSize = 32768;
         bufInSizeByte = fftSize * 2;
-        bufInSizeShort = fftSize;
-
+        bufInSizeShort = 512;//fftSize;
+        nbSamplesFadeIO = 8;
         /**
          * AudioRecord の初期化
          *  マイクからの標準入力
