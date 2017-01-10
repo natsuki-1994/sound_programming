@@ -33,8 +33,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.jtransforms.fft.DoubleFFT_1D;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -137,11 +135,14 @@ public class MainActivity extends FragmentActivity {
 
                             short al[] = new short[TEMPLATE_SIZE];
                             short bl[] = new short[TEMPLATE_SIZE];
-                            short cl[] = new short[(int) (bufIn.length * 1.5)];
+//                            short cl[] = new short[(int) (bufIn.length * 1.5)];
+                            short cl[] = new short[bufIn.length * 2];
                             double temp;
                             double r;
 
                             while ((offset0 + P_MAX * 2) < bufInSizeShort) {
+                                Log.v("AudioTrack", String.valueOf(offset1));
+                                Log.v("bufOut.length", String.valueOf(bufOut.length));
                                 for (int i = 0; i < TEMPLATE_SIZE; i++) {
                                     al[i] = bufIn[offset0 + i];
                                 }
@@ -164,17 +165,34 @@ public class MainActivity extends FragmentActivity {
                                 }
 
                                 for (int i = 0; i < pFound; i++) {
-                                    cl[offset1 + i] = bufIn[offset0 + i];
+                                    cl[offset1 + 2 * i] = bufIn[offset0 + i];
+                                    cl[offset1 + 2 * i + i] = bufIn[offset0 + i];
                                 }
+//                                for (int i = 0; i < pFound; i++) {
+//                                    cl[offset1 + pFound + i] = (short) (bufIn[offset0 + i] * (i / pFound));
+//                                    cl[offset1 + pFound + i] = (short) (bufIn[offset0 + pFound + i] * (1 - (i / pFound)));
+//                                }
+//                                for (int i = 0; i < pFound; i++) {
+//                                    cl[offset1 + 2 * pFound + i] = bufIn[offset0 + pFound + i];
+//                                }
+                                offset0 = offset0 + pFound;
+                                offset1 = offset1 + 2 * pFound;
                             }
 
-                            /**
-                             * stereo に変更する
-                             */
-                            for (int i = 0; i < bufInSizeShort; i++) {
-                                bufOutFifo.offer(bufIn[i]);
-                                bufOutFifo.offer(bufIn[i]);
+                            for (int i = 0; i < offset1; i++) {
+                                bufOutFifo.offer(cl[i]);
+                                bufOutFifo.offer(cl[i]);
                             }
+                            Log.v("AudioTrack", String.valueOf(offset1));
+                            Log.v("bufOut.length", String.valueOf(bufOut.length));
+
+//                            /**
+//                             * stereo に変更する
+//                             */
+//                            for (int i = 0; i < bufInSizeShort; i++) {
+//                                bufOutFifo.offer(bufIn[i]);
+//                                bufOutFifo.offer(bufIn[i]);
+//                            }
 
 //                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);
 //                            double fftData[] = new double[fftSize];
@@ -224,61 +242,61 @@ public class MainActivity extends FragmentActivity {
 //                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
 //                            }
                         } else if (playState == 2) {  /** state : slow */
-                            /**
-                             * 1/2 倍速 にする
-                             */
-                            for (int i = 0; i < bufInSizeShort; i++) {
-                                bufInStretched[2 * i] = bufIn[i];
-                                bufInStretched[2 * i + 1] = bufIn[i];
-                            }
-
-                            /**
-                             * fft 処理
-                             *   fft      ... FFT インスタンスの生成
-                             *   fftData  ... FFT をかけるデータ（double 型）
-                             *   ifftData ... IFFT をかけるデータ（double 型）
-                             */
-                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);  /** fftSize = 4096 / bufInStretched = 4096 * 2 */
-                            double fftData[] = new double[fftSize];
-                            double ifftData[] = new double[fftSize];
-
-                            for (int i = 0; i < bufInStretched.length; i += fftSize) {
-                                /**
-                                 * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
-                                 */
-                                for (int j = 0; j < fftSize; j++) {
-                                    fftData[j] = (bufInStretched[j] * 1.0) / Short.MAX_VALUE;
-                                }
-
-                                /**
-                                 * FFT 実行
-                                 * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
-                                 */
-                                fft.realForward(fftData);
-
-                                /**
-                                 * 周波数シフトを行う
-                                 */
-                                 for (int j = 0; j < fftSize / 2; j += 2) {
-                                     ifftData[2 * j] = fftData[j];
-                                     ifftData[2 * j + 1] = fftData[j + 1];
-                                     ifftData[2 * j + 2] = fftData[j] / 10;
-                                     ifftData[2 * j + 3] = 0;
-                                 }
-
-                                /**
-                                 * IFFT 実行
-                                 */
-                                fft.realInverse(ifftData, true);
-
-                                /**
-                                 * stereo に変更して bufOutFifo にプッシュ
-                                 */
-                                for (int j = 0; j < fftSize; j++) {
-                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-                                }
-                            }
+//                            /**
+//                             * 1/2 倍速 にする
+//                             */
+//                            for (int i = 0; i < bufInSizeShort; i++) {
+//                                bufInStretched[2 * i] = bufIn[i];
+//                                bufInStretched[2 * i + 1] = bufIn[i];
+//                            }
+//
+//                            /**
+//                             * fft 処理
+//                             *   fft      ... FFT インスタンスの生成
+//                             *   fftData  ... FFT をかけるデータ（double 型）
+//                             *   ifftData ... IFFT をかけるデータ（double 型）
+//                             */
+//                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);  /** fftSize = 4096 / bufInStretched = 4096 * 2 */
+//                            double fftData[] = new double[fftSize];
+//                            double ifftData[] = new double[fftSize];
+//
+//                            for (int i = 0; i < bufInStretched.length; i += fftSize) {
+//                                /**
+//                                 * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
+//                                 */
+//                                for (int j = 0; j < fftSize; j++) {
+//                                    fftData[j] = (bufInStretched[j] * 1.0) / Short.MAX_VALUE;
+//                                }
+//
+//                                /**
+//                                 * FFT 実行
+//                                 * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
+//                                 */
+//                                fft.realForward(fftData);
+//
+//                                /**
+//                                 * 周波数シフトを行う
+//                                 */
+//                                 for (int j = 0; j < fftSize / 2; j += 2) {
+//                                     ifftData[2 * j] = fftData[j];
+//                                     ifftData[2 * j + 1] = fftData[j + 1];
+//                                     ifftData[2 * j + 2] = fftData[j] / 10;
+//                                     ifftData[2 * j + 3] = 0;
+//                                 }
+//
+//                                /**
+//                                 * IFFT 実行
+//                                 */
+//                                fft.realInverse(ifftData, true);
+//
+//                                /**
+//                                 * stereo に変更して bufOutFifo にプッシュ
+//                                 */
+//                                for (int j = 0; j < fftSize; j++) {
+//                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+//                                    bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
+//                                }
+//                            }
                         }
 
                         if (!bIsRecording) {
@@ -336,8 +354,10 @@ public class MainActivity extends FragmentActivity {
                 SAMPLING_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        bufInSizeByte = fftSize * 2;
-        bufInSizeShort = fftSize;
+//        bufInSizeByte = fftSize * 2;
+//        bufInSizeShort = fftSize;
+        bufInSizeByte = 40000 * 2;
+        bufInSizeShort = 40000;
 
         /**
          * AudioRecord の初期化
