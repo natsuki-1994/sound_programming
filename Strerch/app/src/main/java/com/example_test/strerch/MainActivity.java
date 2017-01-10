@@ -63,6 +63,7 @@ public class MainActivity extends FragmentActivity {
     int SAMPLING_RATE = 44100;
     int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
     int fftSize;
+    int sizeOfResampling;
     int nbSamplesFadeIO;
 
     /**
@@ -178,24 +179,38 @@ public class MainActivity extends FragmentActivity {
                                 bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
                             }
                         } else if (playState == 2) {  /** state : slow */
-                            //bufInにフェードイン、フェードアウト処理
-                            for (int j = 0; j < nbSamplesFadeIO; j++) {
-                                double rate = (double)j / (double)nbSamplesFadeIO;
-                                bufIn[j]                      *= rate;
-                                bufIn[bufIn.length - 1 - j]   *= rate;
-                            }
 
-                            //二つ並べたものをbufInStretchedに格納
+                            LinkedList<Short> resampleFifo = new LinkedList<>();
+
                             for (int j = 0; j < bufIn.length; j++) {
-                                bufInStretched[j]                  = bufIn[j];
-                                bufInStretched[j + bufIn.length]   = bufIn[j];
+                                resampleFifo.offer(bufIn[j]);
                             }
 
-                            /*** stereo に変更して bufOutFifo にプッシュ***/
-                            for (int j = 0; j < bufInStretched.length; j++) {
-                                bufOutFifo.offer(bufInStretched[j]);
-                                bufOutFifo.offer(bufInStretched[j]);
+                            while (resampleFifo.size() >= sizeOfResampling) {
+                                short resampleChunk[] = new short[sizeOfResampling];
+
+                                for (int j = 0; j < resampleChunk.length/*=sizeOfResampling*/; j++) {
+                                    resampleChunk[j] = resampleFifo.poll();
+                                }
+
+                                //フェードイン、フェードアウト処理
+                                for (int j = 0; j < nbSamplesFadeIO; j++) {
+                                    double rate = (double)j / (double)nbSamplesFadeIO;
+                                    resampleChunk[j]                              *= rate;
+                                    resampleChunk[resampleChunk.length - 1 - j]   *= rate;
+                                }
+
+                                int timesOfResampling = 2; //これをnに設定->n倍にタイムストレッチ
+                                /*** stereo に変更して bufOutFifo にn回プッシュ***/
+                                for (int k = 0; k < timesOfResampling; k++) {
+                                    for (int j = 0; j < bufInStretched.length; j++) {
+                                        bufOutFifo.offer(resampleChunk[j]);
+                                        bufOutFifo.offer(resampleChunk[j]);
+                                    }
+                                }
                             }
+
+
                         }
 
                         if (!bIsRecording) {
@@ -252,9 +267,11 @@ public class MainActivity extends FragmentActivity {
                 SAMPLING_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-        fftSize = 32768;
-        bufInSizeByte = fftSize * 2;
-        bufInSizeShort = 512;//fftSize;
+        bufInSizeByte = 65536;
+        bufInSizeShort = bufInSizeByte / 2;
+        fftSize = bufInSizeByte / 2;
+
+        sizeOfResampling = 400;
         nbSamplesFadeIO = 8;
         /**
          * AudioRecord の初期化
