@@ -444,7 +444,7 @@ public class MainActivity extends FragmentActivity {
         public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {  /** isChecked で outside ON */
             Toast.makeText(MainActivity.this, "outside", Toast.LENGTH_SHORT).show();
             if (isChecked) {
-                playState = 1;  /** state : play */
+                playState = 2;  /** state : play */
                 audioTrack.play();
                 recordingAndPlay();
             } else {
