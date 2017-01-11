@@ -222,6 +222,36 @@ public class MainActivity extends FragmentActivity {
                         for (int j = 0; j < bufOut.length; j++) {
                             bufOut[j] = bufOutFifo.poll();
                         }
+
+                        double fftBuf[] = new double[bufOut.length];
+
+                        //normalize
+                        for (int j = 0; j < bufOut.length; j++) {
+                            fftBuf[j] = (double)bufOut[j] / (double)Short.MAX_VALUE;
+                        }
+
+                        //low-pass filter
+                        DoubleFFT_1D fft = new DoubleFFT_1D(fftBuf.length);
+
+                        fft.realForward(fftBuf);
+                        for (int j = 0; j < fftBuf.length; j++) {
+                            double pos = j / fftBuf.length;
+                            double low_limit = 0;
+                            double decay_start = 0.20, decay_end = 0.24;
+                            if (pos <= low_limit) {
+                                //fftBuf[j] = 0;
+                            } else if (decay_start <= pos && pos <= decay_end) {
+                                fftBuf[j] *= (decay_end - pos) / (decay_end - decay_start);
+                            } else if (decay_end <= pos) {
+                                fftBuf[j] = 0;
+                            }
+                        }
+                        fft.realInverse(fftBuf, true);
+
+                        for (int j = 0; j < fftBuf.length; j++) {
+                            bufOut[j] = (short)(fftBuf[j] * Short.MAX_VALUE);
+                        }
+
                         audioTrack.write(bufOut, 0, bufOut.length);
 
                     }
