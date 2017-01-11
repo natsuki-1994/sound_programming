@@ -271,7 +271,7 @@ public class MainActivity extends FragmentActivity {
         bufInSizeShort = bufInSizeByte / 2;
         fftSize = bufInSizeByte / 2;
 
-        sizeOfResampling = 400;
+        sizeOfResampling = 800;
         nbSamplesFadeIO = 8;
         /**
          * AudioRecord の初期化
