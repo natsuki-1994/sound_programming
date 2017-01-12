@@ -8,6 +8,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.SwitchCompat;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -66,11 +67,6 @@ public class RootMenu extends Fragment {
 
         SectionsPagerAdapter(FragmentManager fm) { super(fm); }
 
-//        Fragment fragmentHome = new HomeSectionFragment();
-//        Fragment fragmentTrack = new TrackSectionFragment();
-//        Fragment fragmentAlbum = new AlbumSectionFragment();
-//        Fragment fragmentArtist = new ArtistSectionFragment();
-
         /**
          * ページをスワイプするごとに R.id.pager に表示する Fragment を変更
          */
@@ -82,10 +78,6 @@ public class RootMenu extends Fragment {
                 case 1: fragment = new TrackSectionFragment(); break;
                 case 2: fragment = new AlbumSectionFragment(); break;
                 case 3: fragment = new ArtistSectionFragment(); break;
-//                case 0: fragment = fragmentHome; break;
-//                case 1: fragment = fragmentTrack; break;
-//                case 2: fragment = fragmentAlbum; break;
-//                case 3: fragment = fragmentArtist; break;
             }
             return fragment;
         }
@@ -126,6 +118,7 @@ public class RootMenu extends Fragment {
             Button buttonPlayPause = (Button) v.findViewById(R.id.c_btn);
             Button buttonNext = (Button) v.findViewById(R.id.c_btn_next);
             Button buttonBack = (Button) v.findViewById(R.id.c_btn_back);
+            activity.focusedFragment = 1;
             activity.changeSeekbar();
 
             Typeface font = Typeface.createFromAsset(activity.getAssets(), "fontawesome-webfont.ttf");
@@ -144,6 +137,7 @@ public class RootMenu extends Fragment {
              */
             buttonPlayPause.setOnClickListener(activity.buttonPlayPauseClickListener);
 
+            Log.v("hogehoge", "hogwwww");
             return v;
         }
     }
@@ -169,8 +163,10 @@ public class RootMenu extends Fragment {
              * album をクリックしたときに RootMenu の Fragment から AlbumMenu の Fragment に変更
              * メソッドは MainActivity で定義
              */
-            trackList.setOnItemLongClickListener(activity.TrackLongClickListener);
+            trackList.setOnItemClickListener(activity.TrackLongClickListener);
 
+            Log.v("hogehoge", "hogw");
+            activity.changeInformation();
             return v;
         }
 

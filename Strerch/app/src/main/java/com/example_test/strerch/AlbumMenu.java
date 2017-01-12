@@ -57,7 +57,7 @@ public class AlbumMenu extends Fragment {
         /**
          * trackList がクリックされたら曲の再生
          */
-        trackList.setOnItemLongClickListener(activity.TrackLongClickListener);
+        trackList.setOnItemClickListener(activity.TrackLongClickListener);
 
         return partView;
     }

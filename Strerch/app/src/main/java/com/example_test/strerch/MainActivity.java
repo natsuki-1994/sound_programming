@@ -16,7 +16,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -51,10 +50,10 @@ public class MainActivity extends FragmentActivity {
     /**
      * Focus されている Album, Artist, Track
      */
-    private static Album focusedAlbum;
+    private static Album focusedAlbum = null;
     private static Artist focusedArtist;
-    public Track focusedTrack;
-    private Fragment focusedFragment;
+    public Track focusedTrack = null;
+    public int focusedFragment = 1;  /** 1 : fRoot, 2 : fAlbum, 3 : fArtist */
 
     /**
      * Audio 関連の変数
@@ -128,72 +127,69 @@ public class MainActivity extends FragmentActivity {
                         audioRec.read(bufIn, 0, bufInSizeShort);
 
                         if (playState == 1) {  /** state : play */
-
-                            int offset0 = 0;
-                            int offset1 = 0;
-                            int pFound;
-
-                            short al[] = new short[TEMPLATE_SIZE];
-                            short bl[] = new short[TEMPLATE_SIZE];
+//                            int offset0 = 0;
+//                            int offset1 = 0;
+//                            int pFound;
+//
+//                            short al[] = new short[TEMPLATE_SIZE];
+//                            short bl[] = new short[TEMPLATE_SIZE];
 //                            short cl[] = new short[(int) (bufIn.length * 1.5)];
-                            short cl[] = new short[bufIn.length * 2];
-                            double temp;
-                            double r;
+//                            short cl[] = new short[bufIn.length * 2];
+//                            double temp;
+//                            double r;
 
-                            while ((offset0 + P_MAX * 2) < bufInSizeShort) {
-                                Log.v("AudioTrack", String.valueOf(offset1));
-                                Log.v("bufOut.length", String.valueOf(bufOut.length));
-                                for (int i = 0; i < TEMPLATE_SIZE; i++) {
-                                    al[i] = bufIn[offset0 + i];
-                                }
-                                double rMax = 0.0;
-                                pFound = P_MIN;
-
-                                for (int tau = P_MIN; tau < P_MAX; tau++) {
-                                    r = 0;
-                                    for (int j = 0; j < TEMPLATE_SIZE; j++) {
-                                        bl[j] = bufIn[offset0 + tau + j];
-                                    }
-                                    for (int j = 0; j < TEMPLATE_SIZE; j++) {
-                                        temp = al[j] * bl[j];
-                                        r += temp;
-                                    }
-                                    if (r > rMax) {
-                                        rMax = r;
-                                        pFound = tau;
-                                    }
-                                }
-
-                                for (int i = 0; i < pFound; i++) {
-                                    cl[offset1 + 2 * i] = bufIn[offset0 + i];
-                                    cl[offset1 + 2 * i + i] = bufIn[offset0 + i];
-                                }
-//                                for (int i = 0; i < pFound; i++) {
-//                                    cl[offset1 + pFound + i] = (short) (bufIn[offset0 + i] * (i / pFound));
-//                                    cl[offset1 + pFound + i] = (short) (bufIn[offset0 + pFound + i] * (1 - (i / pFound)));
+//                            while ((offset0 + P_MAX * 2) < bufInSizeShort) {
+//                                Log.v("AudioTrack", String.valueOf(offset1));
+//                                Log.v("bufOut.length", String.valueOf(bufOut.length));
+//                                for (int i = 0; i < TEMPLATE_SIZE; i++) {
+//                                    al[i] = bufIn[offset0 + i];
 //                                }
-//                                for (int i = 0; i < pFound; i++) {
-//                                    cl[offset1 + 2 * pFound + i] = bufIn[offset0 + pFound + i];
+//                                double rMax = 0.0;
+//                                pFound = P_MIN;
+//
+//                                for (int tau = P_MIN; tau < P_MAX; tau++) {
+//                                    r = 0;
+//                                    for (int j = 0; j < TEMPLATE_SIZE; j++) {
+//                                        bl[j] = bufIn[offset0 + tau + j];
+//                                    }
+//                                    for (int j = 0; j < TEMPLATE_SIZE; j++) {
+//                                        temp = al[j] * bl[j];
+//                                        r += temp;
+//                                    }
+//                                    if (r > rMax) {
+//                                        rMax = r;
+//                                        pFound = tau;
+//                                    }
 //                                }
-                                offset0 = offset0 + pFound;
-                                offset1 = offset1 + 2 * pFound;
-                            }
-
-                            for (int i = 0; i < offset1; i++) {
-                                bufOutFifo.offer(cl[i]);
-                                bufOutFifo.offer(cl[i]);
-                            }
-                            Log.v("AudioTrack", String.valueOf(offset1));
-                            Log.v("bufOut.length", String.valueOf(bufOut.length));
-
-//                            /**
-//                             * stereo に変更する
-//                             */
-//                            for (int i = 0; i < bufInSizeShort; i++) {
-//                                bufOutFifo.offer(bufIn[i]);
-//                                bufOutFifo.offer(bufIn[i]);
+//
+//                                for (int i = 0; i < pFound; i++) {
+//                                    cl[offset1 + 2 * i] = bufIn[offset0 + i];
+//                                    cl[offset1 + 2 * i + i] = bufIn[offset0 + i];
+//                                }
+////                                for (int i = 0; i < pFound; i++) {
+////                                    cl[offset1 + pFound + i] = (short) (bufIn[offset0 + i] * (i / pFound));
+////                                    cl[offset1 + pFound + i] = (short) (bufIn[offset0 + pFound + i] * (1 - (i / pFound)));
+////                                }
+////                                for (int i = 0; i < pFound; i++) {
+////                                    cl[offset1 + 2 * pFound + i] = bufIn[offset0 + pFound + i];
+////                                }
+//                                offset0 = offset0 + pFound;
+//                                offset1 = offset1 + 2 * pFound;
 //                            }
 
+//                            for (int i = 0; i < offset1; i++) {
+//                                bufOutFifo.offer(cl[i]);
+//                                bufOutFifo.offer(cl[i]);
+//                            }
+//                            Log.v("AudioTrack", String.valueOf(offset1));
+//                            Log.v("bufOut.length", String.valueOf(bufOut.length));
+                            /**
+                             * stereo に変更する
+                             */
+                            for (int i = 0; i < bufInSizeShort; i++) {
+                                bufOutFifo.offer(bufIn[i]);
+                                bufOutFifo.offer(bufIn[i]);
+                            }
 //                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);
 //                            double fftData[] = new double[fftSize];
 //                            double ifftData[] = new double[fftSize];
@@ -335,7 +331,6 @@ public class MainActivity extends FragmentActivity {
         setContentView(layout.activity_main);  /** layout を設定 */
         requestPermission();  /** API23 以上で Permission 取得を Activity で行う */
 
-//        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         /**
          * Fragment の初期化
          * onCreate では activity_main.xml の R.id.root には RootMenu Fragment を配置
@@ -354,8 +349,6 @@ public class MainActivity extends FragmentActivity {
                 SAMPLING_RATE,
                 AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
-//        bufInSizeByte = fftSize * 2;
-//        bufInSizeShort = fftSize;
         bufInSizeByte = 40000 * 2;
         bufInSizeShort = 40000;
 
@@ -398,11 +391,13 @@ public class MainActivity extends FragmentActivity {
     }
 
     public void changeSeekbar() {
+        Log.v("Thread", "start");
         new Thread(new Runnable() {
             @Override
             public void run() {
+                Log.v("Thread", "continue");
                 try {
-                    while (mPlayer != null) {
+                    while (mPlayer != null & focusedFragment == 1) {
                         int currentPosition = mPlayer.getCurrentPosition();
                         Message msg = new Message();
                         msg.what = currentPosition;
@@ -412,6 +407,7 @@ public class MainActivity extends FragmentActivity {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                Log.v("Thread", "stop");
             }
         }).start();
     }
@@ -452,16 +448,30 @@ public class MainActivity extends FragmentActivity {
     public void setNewFragment(FrgmType CallFragment) {
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
-        Fragment focusedFragmentAlbum = new AlbumMenu();
-        Fragment focusedFragmentArtist = new ArtistMenu();
 
         switch (CallFragment) {
-//            case fRoot : ft.replace(id.root, new RootMenu(), "Root"); break;
-//            case fAlbum : ft.replace(id.root, new AlbumMenu(), "album"); break;
-//            case fArtist : ft.replace(id.root, new ArtistMenu(), "artist"); break;
-            case fRoot : ft.replace(id.root, new RootMenu(), "Root"); break;
-            case fAlbum : ft.replace(id.root, new AlbumMenu(), "album"); break;
-            case fArtist : ft.replace(id.root, new ArtistMenu(), "artist"); break;
+            case fRoot :
+                focusedFragment = 1;
+                ft.replace(id.root, new RootMenu(), "Root");
+                break;
+            case fAlbum :
+                focusedFragment = 2;
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                ft.replace(id.root, new AlbumMenu(), "album");
+                break;
+            case fArtist :
+                focusedFragment = 3;
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                ft.replace(id.root, new ArtistMenu(), "artist");
+                break;
         }
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
         ft.addToBackStack(null);
@@ -481,7 +491,6 @@ public class MainActivity extends FragmentActivity {
     public void focusArtist(Artist item) { if (item != null) focusedArtist = item; }
     public Artist getFocusedArtist() { return focusedArtist; }
     public void focusTrack(Track item) { if (item != null) focusedTrack = item; }
-//    public Track getFocusedTrack() { return  focusedTrack; }
 
     /**
      * アルバム一覧をクリックしたときの動作
@@ -542,50 +551,60 @@ public class MainActivity extends FragmentActivity {
     /**
      * トラック一覧をクリックしたときの動作確認のための LongClick 動作
      */
-    public  AdapterView.OnItemLongClickListener TrackLongClickListener = new AdapterView.OnItemLongClickListener() {
+    public  AdapterView.OnItemClickListener TrackLongClickListener = new AdapterView.OnItemClickListener() {
         @Override
-        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             ListView lv = (ListView) parent;
             Track item = (Track) lv.getItemAtPosition(position);
             focusTrack(item);
 
-            changeInformation();
+            /**
+             * ホーム画面に表示されるアルバム画像などの情報を変更
+             */
+            if (focusedFragment == 1) {
+                changeInformation();
+            }
             try {
+                /**
+                 * 曲の変更
+                 */
                 changeTrack();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            Toast.makeText(MainActivity.this, "LongClick: " + item.album, Toast.LENGTH_LONG).show();
-
-            return true;
         }
     };
     public void changeInformation() {
-        Bitmap album_art_ = null;
-        long albumId = focusedTrack.albumId;
-        Uri albumArtUri = Uri.parse(
-                "content://media/external/audio/albumart");
-        Uri albumUri = ContentUris.withAppendedId(albumArtUri, albumId);
-        ContentResolver cr = getContentResolver();
-        try {
-            InputStream is = cr.openInputStream(albumUri);
-            album_art_ = BitmapFactory.decodeStream(is);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        if (focusedTrack != null) {
+            Bitmap album_art_ = null;
+            long albumId = focusedTrack.albumId;
+            Uri albumArtUri = Uri.parse("content://media/external/audio/albumart");
+            Uri albumUri = ContentUris.withAppendedId(albumArtUri, albumId);
+            ContentResolver cr = getContentResolver();
+            try {
+                InputStream is = cr.openInputStream(albumUri);
+                album_art_ = BitmapFactory.decodeStream(is);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
 
-        ImageView album_art_root = (ImageView) findViewById(R.id.imageViewHome);
-        album_art_root.setImageBitmap(album_art_);
-        TextView track_root = (TextView) findViewById(R.id.textView_track);
-        track_root.setText(focusedTrack.title);
-        TextView artist_root = (TextView) findViewById(R.id.textView_artist);
-        artist_root.setText(focusedTrack.artist);
+            ImageView album_art_root = (ImageView) findViewById(R.id.imageViewHome);
+            album_art_root.setImageBitmap(album_art_);
+            TextView track_root = (TextView) findViewById(R.id.textView_track);
+            track_root.setText(focusedTrack.title);
+            TextView artist_root = (TextView) findViewById(R.id.textView_artist);
+            artist_root.setText(focusedTrack.artist);
+
+            SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
+            mSeekBarPosition.setMax(mTotalTime);
+
+            if (mPlayer.isPlaying()) {
+                Button buttonPlayPause =  (Button) findViewById(R.id.c_btn);
+                buttonPlayPause.setText(R.string.icon_pause);
+            }
+        }
     }
     public void changeTrack() throws IOException {
-        Button buttonPlayPause =  (Button) findViewById(R.id.c_btn);
-        SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
-
         if (mPlayer.isPlaying()) {
             mPlayer.stop();
             mPlayer.prepare();
@@ -593,8 +612,12 @@ public class MainActivity extends FragmentActivity {
         mPlayer = MediaPlayer.create(this, focusedTrack.uri);
         mPlayer.start();
         mTotalTime = mPlayer.getDuration();
-        mSeekBarPosition.setMax(mTotalTime);
-        buttonPlayPause.setText(R.string.icon_pause);
+        if (focusedFragment == 1) {
+            Button buttonPlayPause =  (Button) findViewById(R.id.c_btn);
+            SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
+            mSeekBarPosition.setMax(mTotalTime);
+            buttonPlayPause.setText(R.string.icon_pause);
+        }
     }
 
     /**
@@ -617,7 +640,7 @@ public class MainActivity extends FragmentActivity {
     };
 
     /**
-     * PLAY / PAUSE ボタン押したとき
+     * PLAY / PAUSE ボタン押したときの動作
      */
     public Button.OnClickListener buttonPlayPauseClickListener = new View.OnClickListener() {
         @Override
@@ -636,56 +659,7 @@ public class MainActivity extends FragmentActivity {
             mPlayer.start();
             mTotalTime = mPlayer.getDuration();
             mSeekBarPosition.setMax(mTotalTime);
-//            mSeekBarPosition.setProgress(mTotalTime / 2);
             buttonPlayPause.setText(R.string.icon_pause);
         }
     }
-
-//    /**
-//     * RootMenu のボタンをクリックしたときの動作
-//     */
-//    public Button.OnClickListener outsideClickListener = new Button.OnClickListener() {
-//        @Override
-//        public void onClick(View view) {
-//            Toast.makeText(MainActivity.this, "outside", Toast.LENGTH_SHORT).show();
-//            if (playState == 0) {  /** state : stop */
-//                playState = 1;  /** state : play */
-//                audioTrack.play();
-//                recordingAndPlay();
-//            } else if (playState == 2) {  /** state : slow */
-//                bIsRecording = false;
-//                audioTrack.stop();
-//                playState = 1;  /** state : play */
-//                try {
-//                    Thread.sleep(100);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                audioTrack.play();
-//                recordingAndPlay();
-//            }  /** state : play ... 何もしない */
-//        }
-//    };
-//    public Button.OnClickListener slowClickListener = new Button.OnClickListener() {
-//        @Override
-//        public void onClick(View view) {
-//            Toast.makeText(MainActivity.this, "slow", Toast.LENGTH_SHORT).show();
-//            if (playState == 0) {  /** state : stop */
-//                playState = 2;  /** state : play */
-//                audioTrack.play();
-//                recordingAndPlay();
-//            } else if (playState == 1) {  /** state : play */
-//                bIsRecording = false;
-//                audioTrack.stop();
-//                playState = 2;  /** state : slow */
-//                try {
-//                    Thread.sleep(100);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                audioTrack.play();
-//                recordingAndPlay();
-//            } /** state : slow ... 何もしない */
-//        }
-//    };
 }
