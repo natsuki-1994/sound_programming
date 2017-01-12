@@ -8,7 +8,6 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.SwitchCompat;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -118,13 +117,14 @@ public class RootMenu extends Fragment {
             Button buttonPlayPause = (Button) v.findViewById(R.id.c_btn);
             Button buttonNext = (Button) v.findViewById(R.id.c_btn_next);
             Button buttonBack = (Button) v.findViewById(R.id.c_btn_back);
-            activity.focusedFragment = 1;
-            activity.changeSeekbar();
 
             Typeface font = Typeface.createFromAsset(activity.getAssets(), "fontawesome-webfont.ttf");
             buttonPlayPause.setTypeface(font);
             buttonNext.setTypeface(font);
             buttonBack.setTypeface(font);
+
+            activity.focusedFragment = 1;
+            activity.changeSeekBar();
 
             /**
              * toggleButton（toggleOutside）をクリックしたときの動作
@@ -137,7 +137,6 @@ public class RootMenu extends Fragment {
              */
             buttonPlayPause.setOnClickListener(activity.buttonPlayPauseClickListener);
 
-            Log.v("hogehoge", "hogwwww");
             return v;
         }
     }
@@ -165,7 +164,6 @@ public class RootMenu extends Fragment {
              */
             trackList.setOnItemClickListener(activity.TrackLongClickListener);
 
-            Log.v("hogehoge", "hogw");
             activity.changeInformation();
             return v;
         }

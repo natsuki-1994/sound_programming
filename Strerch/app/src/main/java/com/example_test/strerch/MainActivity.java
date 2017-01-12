@@ -48,7 +48,7 @@ public class MainActivity extends FragmentActivity {
     enum FrgmType {fRoot, fAlbum, fArtist}
 
     /**
-     * Focus されている Album, Artist, Track
+     * Focus されている Album, Artist, Track, Fragment
      */
     private static Album focusedAlbum = null;
     private static Artist focusedArtist;
@@ -66,10 +66,6 @@ public class MainActivity extends FragmentActivity {
     int bufInSizeShort;
     int SAMPLING_RATE = 44100;
     int playState = 0;  /** stop : 0 , play : 1, slow: 2 */
-    int fftSize = 4096;
-    int TEMPLATE_SIZE = 441;
-    int P_MIN = 220;
-    int P_MAX = 882;
 
     /**
      * MediaPlayer 関連の変数
@@ -303,6 +299,7 @@ public class MainActivity extends FragmentActivity {
                          */
                         for (int j = 0; j < bufOut.length; j++) {
                             bufOut[j] = bufOutFifo.poll();
+//                            bufOut[j] = 1;
                         }
                         audioTrack.write(bufOut, 0, bufOut.length);
 
@@ -390,13 +387,20 @@ public class MainActivity extends FragmentActivity {
         mPlayer = MediaPlayer.create(this, R.raw.pcm);
     }
 
-    public void changeSeekbar() {
-        Log.v("Thread", "start");
+    /**
+     * SeekBar を動かすメソッド
+     */
+    public void changeSeekBar() {
+        Log.v("SeekBarThread", "start");
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.v("Thread", "continue");
+                Log.v("SeekBarThread", "running");
                 try {
+                    /**
+                     * FocusedFragment != 1 に変わると、RootMenu が破棄されて Null となってしまう
+                     * ので、その瞬間スレッドを停止して破棄する
+                     */
                     while (mPlayer != null & focusedFragment == 1) {
                         int currentPosition = mPlayer.getCurrentPosition();
                         Message msg = new Message();
@@ -407,31 +411,30 @@ public class MainActivity extends FragmentActivity {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                Log.v("Thread", "stop");
+                Log.v("SeekBarThread", "stop");
             }
         }).start();
     }
 
+    /**
+     * SeekBar スレッドと UI との Handler
+     */
     private Handler threadHandler = new Handler() {
         public void handleMessage(Message msg) {
             final SeekBar mSeekBarPosition = (SeekBar) findViewById(R.id.seekBar);
             mSeekBarPosition.setProgress(msg.what);
             mSeekBarPosition.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
-                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                    if (b) {
-                        mPlayer.seekTo(i);
-                        mSeekBarPosition.setProgress(i);
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        mPlayer.seekTo(progress);
+                        mSeekBarPosition.setProgress(progress);
                     }
                 }
                 @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-
-                }
+                public void onStartTrackingTouch(SeekBar seekBar) {}
                 @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-
-                }
+                public void onStopTrackingTouch(SeekBar seekBar) {}
             });
         }
     };
@@ -560,6 +563,7 @@ public class MainActivity extends FragmentActivity {
 
             /**
              * ホーム画面に表示されるアルバム画像などの情報を変更
+             * FocusedFragment != 1 だと Null となってしまう
              */
             if (focusedFragment == 1) {
                 changeInformation();
