@@ -251,28 +251,30 @@ public class MainActivity extends FragmentActivity {
                                 resampleFifo.offer(bufIn[j]);
                             }
 
+                            short resampleChunk[] = new short[sizeOfResampling];
+                            short prevChunkFadeMargin[] = new short[nbSamplesFadeIO];
+                            for (int j = 0; j < prevChunkFadeMargin.length; j++) {
+                                prevChunkFadeMargin[j] = 0;
+                            }
+
+                            int phaseResampling = 0;
                             while (resampleFifo.size() >= sizeOfResampling) {
-                                short resampleChunk[] = new short[sizeOfResampling];
-
-                                for (int j = 0; j < resampleChunk.length/*=sizeOfResampling*/; j++) {
-                                    resampleChunk[j] = resampleFifo.poll();
-                                }
-
-                                //フェードイン、フェードアウト処理
-                                for (int j = 0; j < nbSamplesFadeIO; j++) {
-                                    double rate = (double)j / (double)nbSamplesFadeIO;
-                                    resampleChunk[j]                              *= rate;
-                                    resampleChunk[resampleChunk.length - 1 - j]   *= rate;
-                                }
-
-                                int timesOfResampling = 2; //これをnに設定->n倍にタイムストレッチ
-                                /*** stereo に変更して bufOutFifo にn回プッシュ***/
-                                for (int k = 0; k < timesOfResampling; k++) {
-                                    for (int j = 0; j < resampleChunk.length; j++) {
-                                        bufOutFifo.offer(resampleChunk[j]);
-                                        bufOutFifo.offer(resampleChunk[j]);
+                                if (phaseResampling == 0) {
+                                    for (int j = 0; j < resampleChunk.length/*=sizeOfResampling*/; j++) {
+                                        resampleChunk[j] = resampleFifo.poll();
                                     }
                                 }
+
+                                for (int j = 0; j < nbSamplesFadeIO; j++) {
+                                    double r = (double)j / (double)nbSamplesFadeIO;
+                                    resampleChunk[j] = (short)((1.0 - r) * prevChunkFadeMargin[j] + r * resampleChunk[j]);
+                                }
+
+                                for (int j = 0; j < resampleChunk.length; j++) {
+                                    bufOutFifo.offer(resampleChunk[j]);
+                                    bufOutFifo.offer(resampleChunk[j]);
+                                }
+                                phaseResampling = (phaseResampling + 1) % 2; //0->1->0->1->...
                             }
                         }
 
@@ -365,7 +367,7 @@ public class MainActivity extends FragmentActivity {
         bufInSizeShort = bufInSizeByte / 2;
 
         sizeOfResampling = 800;
-        nbSamplesFadeIO = 8;
+        nbSamplesFadeIO = 80;
 
         /**
          * AudioRecord の初期化
