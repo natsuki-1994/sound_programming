@@ -259,7 +259,7 @@ public class MainActivity extends FragmentActivity {
 
                             int phaseResampling = 0;
                             while (resampleFifo.size() >= sizeOfResampling) {
-                                if (phaseResampling == 0) {
+                                if (phaseResampling == 0 || phaseResampling == 1) {
                                     for (int j = 0; j < resampleChunk.length/*=sizeOfResampling*/; j++) {
                                         resampleChunk[j] = resampleFifo.poll();
                                     }
@@ -267,14 +267,32 @@ public class MainActivity extends FragmentActivity {
 
                                 for (int j = 0; j < nbSamplesFadeIO; j++) {
                                     double r = (double)j / (double)nbSamplesFadeIO;
-                                    resampleChunk[j] = (short)((1.0 - r) * prevChunkFadeMargin[j] + r * resampleChunk[j]);
+                                    resampleChunk[j] = (short) Math.min(Short.MAX_VALUE, (short)((1.0 - r) * prevChunkFadeMargin[j] + r * resampleChunk[j]));
+                                }
+
+                                //音量が一定値以下なら切る(これは聴いた感じイマイチだった…)
+//                                double sqsumAvg = 0.0;
+//                                for (int j = 0; j < sizeOfResampling; j++) {
+//                                    sqsumAvg += (double)resampleChunk[j] * (double)resampleChunk[j] / Short.MAX_VALUE;
+//                                }
+//                                if (Math.sqrt(sqsumAvg) <= 64) {
+//                                    for (int k = 0; k < sizeOfResampling; k++) {
+//                                        resampleChunk[k] = 0;
+//                                    }
+//                                    for (int k = 0; k < nbSamplesFadeIO; k++) {
+//                                        prevChunkFadeMargin[k] = 0;
+//                                    }
+//                                }
+
+                                for (int j = 0; j < prevChunkFadeMargin.length; j++) {
+                                    prevChunkFadeMargin[j] = resampleFifo.get(j);
                                 }
 
                                 for (int j = 0; j < resampleChunk.length; j++) {
                                     bufOutFifo.offer(resampleChunk[j]);
                                     bufOutFifo.offer(resampleChunk[j]);
                                 }
-                                phaseResampling = (phaseResampling + 1) % 2; //0->1->0->1->...
+                                phaseResampling = (phaseResampling + 1) % 3;
                             }
                         }
 
@@ -301,11 +319,11 @@ public class MainActivity extends FragmentActivity {
 
                         fft.realForward(fftBuf);
                         for (int j = 0; j < fftBuf.length; j++) {
-                            double pos = j / fftBuf.length;
-                            double low_limit = 0;
-                            double decay_start = 0.18, decay_end = 0.22;
+                            double pos = (double) j / (double)fftBuf.length;
+                            double low_limit = 0.0015;
+                            double decay_start = 0.18, decay_end = 0.21;
                             if (pos <= low_limit) {
-                                //fftBuf[j] = 0;
+                                fftBuf[j] = 0;
                             } else if (decay_start <= pos && pos <= decay_end) {
                                 fftBuf[j] *= (decay_end - pos) / (decay_end - decay_start);
                             } else if (decay_end <= pos) {
@@ -366,8 +384,8 @@ public class MainActivity extends FragmentActivity {
         bufInSizeByte = 65536;
         bufInSizeShort = bufInSizeByte / 2;
 
-        sizeOfResampling = 800;
-        nbSamplesFadeIO = 80;
+        sizeOfResampling = 400;
+        nbSamplesFadeIO = 350;
 
         /**
          * AudioRecord の初期化
