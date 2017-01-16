@@ -73,6 +73,7 @@ public class MainActivity extends FragmentActivity {
     int nbSamplesFadeIO;
     boolean isOutside = false;
     boolean isSlow = false;
+    boolean hogeFlag = false;
 
     /**
      * MediaPlayer 関連の変数
@@ -564,32 +565,48 @@ public class MainActivity extends FragmentActivity {
     public SwitchCompat.OnCheckedChangeListener toggleOutsideClickListener = new SwitchCompat.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {  /** isChecked で outside ON */
-            Toast.makeText(MainActivity.this, "outside", Toast.LENGTH_SHORT).show();
             if (isChecked) {
-                isOutside = true;
-                playState = 1;  /** state : play */
-                audioTrack.play();
-                recordingAndPlay();
+                if (!hogeFlag) {
+                    isOutside = true;
+                    playState = 1;  /** state : play */
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    audioTrack.play();
+                    recordingAndPlay();
+                }
             } else {
+                isOutside = false;
                 playState = 0;  /** state : stop */
                 bIsRecording = false;
                 audioTrack.stop();
+
+                if (isSlow) {  /** Slow 状態ならトグルスイッチさせて OFF する必要あり */
+                    hogeFlag = true;
+                    SwitchCompat slowToggleButton = (SwitchCompat) findViewById(id.toggleSlow);
+                    slowToggleButton.setChecked(false);
+                    hogeFlag = false;
+                }
             }
         }
     };
     public SwitchCompat.OnCheckedChangeListener toggleSlowClickListener = new SwitchCompat.OnCheckedChangeListener() {
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {  /** isChecked で slow ON */
-            Toast.makeText(MainActivity.this, "slow", Toast.LENGTH_SHORT).show();
             if (isChecked) {
+                isSlow = true;
                 if (isOutside) {  /** outsideToggle ボタンが ON の状態 */
                     playState = 0;  /** 一旦 stop */
                     bIsRecording = false;
                     audioTrack.stop();
+                    isOutside = false;
                 } else {  /** outsideToggle ボタンが OFF の状態ならトグルボタンを連動させる */
+                    hogeFlag = true;
                     SwitchCompat outsideToggleButton = (SwitchCompat) findViewById(R.id.toggleOutside);
-                    outsideToggleButton.setChecked(true);
-                    isOutside = true;
+                    outsideToggleButton.performClick();
+                    hogeFlag = false;
                 }
                 if (mPlayer.isPlaying()) {
                     Button buttonPlayPause =  (Button) findViewById(R.id.c_btn);
@@ -597,19 +614,29 @@ public class MainActivity extends FragmentActivity {
                     buttonPlayPause.setText(R.string.icon_play);
                 }
                 playState = 2;  /** slow */
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 audioTrack.play();
                 recordingAndPlay();
-                isSlow = true;
             } else {
+                isSlow = false;
                 playState = 0;
                 bIsRecording = false;
                 audioTrack.stop();
-//                if (isOutside) {  /** outsideToggle ボタンが ON の状態 */
-//                    playState = 1;
-//                    audioTrack.play();
-//                    recordingAndPlay();
-//                }
-                isSlow = false;
+
+                if (!hogeFlag) {
+                    playState = 1;
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    audioTrack.play();
+                    recordingAndPlay();
+                }
             }
         }
     };

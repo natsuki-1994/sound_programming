@@ -114,6 +114,7 @@ public class RootMenu extends Fragment {
              */
             View v = inflater.inflate(R.layout.menu_home, container, false);
             SwitchCompat toggleOutside = (SwitchCompat) v.findViewById(R.id.toggleOutside);
+            SwitchCompat toggleSlow = (SwitchCompat) v.findViewById(R.id.toggleSlow);
             Button buttonPlayPause = (Button) v.findViewById(R.id.c_btn);
             Button buttonNext = (Button) v.findViewById(R.id.c_btn_next);
             Button buttonBack = (Button) v.findViewById(R.id.c_btn_back);
@@ -131,6 +132,7 @@ public class RootMenu extends Fragment {
              * メソッドは MainActivity で定義
              */
             toggleOutside.setOnCheckedChangeListener(activity.toggleOutsideClickListener);
+            toggleSlow.setOnCheckedChangeListener(activity.toggleSlowClickListener);
 
             /**
              * Play / Pause ボタン押したとき
