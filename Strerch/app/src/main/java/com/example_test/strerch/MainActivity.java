@@ -136,116 +136,10 @@ public class MainActivity extends FragmentActivity {
                         audioRec.read(bufIn, 0, bufInSizeShort);
 
                         if (playState == 1) {  /** state : play */
-//                            int offset0 = 0;
-//                            int offset1 = 0;
-//                            int pFound;
-//
-//                            short al[] = new short[TEMPLATE_SIZE];
-//                            short bl[] = new short[TEMPLATE_SIZE];
-//                            short cl[] = new short[(int) (bufIn.length * 1.5)];
-//                            short cl[] = new short[bufIn.length * 2];
-//                            double temp;
-//                            double r;
-
-//                            while ((offset0 + P_MAX * 2) < bufInSizeShort) {
-//                                Log.v("AudioTrack", String.valueOf(offset1));
-//                                Log.v("bufOut.length", String.valueOf(bufOut.length));
-//                                for (int i = 0; i < TEMPLATE_SIZE; i++) {
-//                                    al[i] = bufIn[offset0 + i];
-//                                }
-//                                double rMax = 0.0;
-//                                pFound = P_MIN;
-//
-//                                for (int tau = P_MIN; tau < P_MAX; tau++) {
-//                                    r = 0;
-//                                    for (int j = 0; j < TEMPLATE_SIZE; j++) {
-//                                        bl[j] = bufIn[offset0 + tau + j];
-//                                    }
-//                                    for (int j = 0; j < TEMPLATE_SIZE; j++) {
-//                                        temp = al[j] * bl[j];
-//                                        r += temp;
-//                                    }
-//                                    if (r > rMax) {
-//                                        rMax = r;
-//                                        pFound = tau;
-//                                    }
-//                                }
-//
-//                                for (int i = 0; i < pFound; i++) {
-//                                    cl[offset1 + 2 * i] = bufIn[offset0 + i];
-//                                    cl[offset1 + 2 * i + i] = bufIn[offset0 + i];
-//                                }
-////                                for (int i = 0; i < pFound; i++) {
-////                                    cl[offset1 + pFound + i] = (short) (bufIn[offset0 + i] * (i / pFound));
-////                                    cl[offset1 + pFound + i] = (short) (bufIn[offset0 + pFound + i] * (1 - (i / pFound)));
-////                                }
-////                                for (int i = 0; i < pFound; i++) {
-////                                    cl[offset1 + 2 * pFound + i] = bufIn[offset0 + pFound + i];
-////                                }
-//                                offset0 = offset0 + pFound;
-//                                offset1 = offset1 + 2 * pFound;
-//                            }
-
-//                            for (int i = 0; i < offset1; i++) {
-//                                bufOutFifo.offer(cl[i]);
-//                                bufOutFifo.offer(cl[i]);
-//                            }
-//                            Log.v("AudioTrack", String.valueOf(offset1));
-//                            Log.v("bufOut.length", String.valueOf(bufOut.length));
-                            /**
-                             * stereo に変更する
-                             */
-                            for (int i = 0; i < bufInSizeShort; i++) {
-                                bufOutFifo.offer(bufIn[i]);
-                                bufOutFifo.offer(bufIn[i]);
+                            for (int j = 0; j < bufIn.length; j++) {
+                                bufOutFifo.offer(bufIn[j]);
+                                bufOutFifo.offer(bufIn[j]);
                             }
-//                            DoubleFFT_1D fft = new DoubleFFT_1D(fftSize);
-//                            double fftData[] = new double[fftSize];
-//                            double ifftData[] = new double[fftSize];
-//
-//                            /**
-//                             * FFT サイズ分だけ取り出し、データ型を short から double に変換し、-1 ～ +1 に正規化
-//                             */
-//                            for (int j = 0; j < fftSize; j++) {
-//                                fftData[j] = (bufIn[j] * 1.0) / Short.MAX_VALUE;
-//                            }
-//
-//                            /**
-//                             * FFT 実行
-//                             * 変換後のデータは [振幅成分] [位相成分] [振幅成分] [位相成分] [振幅成分] [位相成分] ... の 繰り返しとなる
-//                             */
-//                            fft.realForward(fftData);
-//
-////                            for (int j = 0; j < fftSize; j++) {
-////                               ifftData[j] = fftData[j];
-////                            }
-//
-//                            /**
-//                             * 周波数シフトを行う
-//                             */
-//                            for (int j = 0; j < fftSize / 2; j += 2) {
-//                                ifftData[2 * j] = fftData[j];
-//                                ifftData[2 * j + 1] = fftData[j + 1];
-//                                if (j > 0) {
-//                                    ifftData[2 * j + 2] = (fftData[j] + fftData[j - 2]) / 2;
-//                                } else {
-//                                    ifftData[2 * j + 2] = fftData[j];
-//                                }
-//                                ifftData[2 * j + 3] = 0;
-//                            }
-//
-//                            /**
-//                             * IFFT 実行
-//                             */
-//                            fft.realInverse(ifftData, true);
-//
-//                            /**
-//                             * stereo に変更して bufOutFifo にプッシュ
-//                             */
-//                            for (int j = 0; j < fftSize; j++) {
-//                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-//                                bufOutFifo.offer((short) (ifftData[j] * Short.MAX_VALUE));
-//                            }
                         } else if (playState == 2) {  /** state : slow */
                             LinkedList<Short> resampleFifo = new LinkedList<>();
 
@@ -253,28 +147,48 @@ public class MainActivity extends FragmentActivity {
                                 resampleFifo.offer(bufIn[j]);
                             }
 
+                            short resampleChunk[] = new short[sizeOfResampling];
+                            short prevChunkFadeMargin[] = new short[nbSamplesFadeIO];
+                            for (int j = 0; j < prevChunkFadeMargin.length; j++) {
+                                prevChunkFadeMargin[j] = 0;
+                            }
+
+                            int phaseResampling = 0;
                             while (resampleFifo.size() >= sizeOfResampling) {
-                                short resampleChunk[] = new short[sizeOfResampling];
-
-                                for (int j = 0; j < resampleChunk.length/*=sizeOfResampling*/; j++) {
-                                    resampleChunk[j] = resampleFifo.poll();
-                                }
-
-                                //フェードイン、フェードアウト処理
-                                for (int j = 0; j < nbSamplesFadeIO; j++) {
-                                    double rate = (double)j / (double)nbSamplesFadeIO;
-                                    resampleChunk[j]                              *= rate;
-                                    resampleChunk[resampleChunk.length - 1 - j]   *= rate;
-                                }
-
-                                int timesOfResampling = 2; //これをnに設定->n倍にタイムストレッチ
-                                /*** stereo に変更して bufOutFifo にn回プッシュ***/
-                                for (int k = 0; k < timesOfResampling; k++) {
-                                    for (int j = 0; j < resampleChunk.length; j++) {
-                                        bufOutFifo.offer(resampleChunk[j]);
-                                        bufOutFifo.offer(resampleChunk[j]);
+                                if (phaseResampling == 0 || phaseResampling == 1) {
+                                    for (int j = 0; j < resampleChunk.length/*=sizeOfResampling*/; j++) {
+                                        resampleChunk[j] = resampleFifo.poll();
                                     }
                                 }
+
+                                for (int j = 0; j < nbSamplesFadeIO; j++) {
+                                    double r = (double)j / (double)nbSamplesFadeIO;
+                                    resampleChunk[j] = (short) Math.min(Short.MAX_VALUE, (short)((1.0 - r) * prevChunkFadeMargin[j] + r * resampleChunk[j]));
+                                }
+
+                                //音量が一定値以下なら切る(これは聴いた感じイマイチだった…)
+//                                double sqsumAvg = 0.0;
+//                                for (int j = 0; j < sizeOfResampling; j++) {
+//                                    sqsumAvg += (double)resampleChunk[j] * (double)resampleChunk[j] / Short.MAX_VALUE;
+//                                }
+//                                if (Math.sqrt(sqsumAvg) <= 64) {
+//                                    for (int k = 0; k < sizeOfResampling; k++) {
+//                                        resampleChunk[k] = 0;
+//                                    }
+//                                    for (int k = 0; k < nbSamplesFadeIO; k++) {
+//                                        prevChunkFadeMargin[k] = 0;
+//                                    }
+//                                }
+
+                                for (int j = 0; j < prevChunkFadeMargin.length; j++) {
+                                    prevChunkFadeMargin[j] = resampleFifo.get(j);
+                                }
+
+                                for (int j = 0; j < resampleChunk.length; j++) {
+                                    bufOutFifo.offer(resampleChunk[j]);
+                                    bufOutFifo.offer(resampleChunk[j]);
+                                }
+                                phaseResampling = (phaseResampling + 1) % 3;
                             }
                         }
 
@@ -301,11 +215,11 @@ public class MainActivity extends FragmentActivity {
 
                         fft.realForward(fftBuf);
                         for (int j = 0; j < fftBuf.length; j++) {
-                            double pos = j / fftBuf.length;
-                            double low_limit = 0;
-                            double decay_start = 0.18, decay_end = 0.22;
+                            double pos = (double) j / (double)fftBuf.length;
+                            double low_limit = 0.0015;
+                            double decay_start = 0.18, decay_end = 0.21;
                             if (pos <= low_limit) {
-                                //fftBuf[j] = 0;
+                                fftBuf[j] = 0;
                             } else if (decay_start <= pos && pos <= decay_end) {
                                 fftBuf[j] *= (decay_end - pos) / (decay_end - decay_start);
                             } else if (decay_end <= pos) {
@@ -366,8 +280,8 @@ public class MainActivity extends FragmentActivity {
         bufInSizeByte = 65536;
         bufInSizeShort = bufInSizeByte / 2;
 
-        sizeOfResampling = 800;
-        nbSamplesFadeIO = 8;
+        sizeOfResampling = 400;
+        nbSamplesFadeIO = 350;
 
         /**
          * AudioRecord の初期化
