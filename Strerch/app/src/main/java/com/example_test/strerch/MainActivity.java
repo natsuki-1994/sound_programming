@@ -71,6 +71,8 @@ public class MainActivity extends FragmentActivity {
     int fftSize;
     int sizeOfResampling;
     int nbSamplesFadeIO;
+    boolean isOutside = false;
+    boolean isSlow = false;
 
     /**
      * MediaPlayer 関連の変数
@@ -650,13 +652,50 @@ public class MainActivity extends FragmentActivity {
         public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {  /** isChecked で outside ON */
             Toast.makeText(MainActivity.this, "outside", Toast.LENGTH_SHORT).show();
             if (isChecked) {
-                playState = 2;  /** state : play */
+                isOutside = true;
+                playState = 1;  /** state : play */
                 audioTrack.play();
                 recordingAndPlay();
             } else {
                 playState = 0;  /** state : stop */
                 bIsRecording = false;
                 audioTrack.stop();
+            }
+        }
+    };
+    public SwitchCompat.OnCheckedChangeListener toggleSlowClickListener = new SwitchCompat.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {  /** isChecked で slow ON */
+            Toast.makeText(MainActivity.this, "slow", Toast.LENGTH_SHORT).show();
+            if (isChecked) {
+                if (isOutside) {  /** outsideToggle ボタンが ON の状態 */
+                    playState = 0;  /** 一旦 stop */
+                    bIsRecording = false;
+                    audioTrack.stop();
+                } else {  /** outsideToggle ボタンが OFF の状態ならトグルボタンを連動させる */
+                    SwitchCompat outsideToggleButton = (SwitchCompat) findViewById(R.id.toggleOutside);
+                    outsideToggleButton.setChecked(true);
+                    isOutside = true;
+                }
+                if (mPlayer.isPlaying()) {
+                    Button buttonPlayPause =  (Button) findViewById(R.id.c_btn);
+                    mPlayer.pause();
+                    buttonPlayPause.setText(R.string.icon_play);
+                }
+                playState = 2;  /** slow */
+                audioTrack.play();
+                recordingAndPlay();
+                isSlow = true;
+            } else {
+                playState = 0;
+                bIsRecording = false;
+                audioTrack.stop();
+//                if (isOutside) {  /** outsideToggle ボタンが ON の状態 */
+//                    playState = 1;
+//                    audioTrack.play();
+//                    recordingAndPlay();
+//                }
+                isSlow = false;
             }
         }
     };
